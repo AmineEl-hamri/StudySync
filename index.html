@@ -62,7 +62,7 @@ body {
             gap: 1rem;
       }
 
-      .btn-primary, .btn-secondary, /btn-login, .btn-register {
+      .btn-primary, .btn-secondary, .btn-login, .btn-register {
             padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 8px;
@@ -134,6 +134,172 @@ body {
             </div>
       </div>
 </section>
-<section
+
+     <div class ="modal" id="loginModal">
+          <div class="modal-content">
+               <span class="close-modal" onclick="closeLoginModal()">&times;</span>
+               <h2>Welcome Back</h2>
+               <p class="modal-subtitle">Log in to your StudySync account </p>
+
+               <form onsubmit="login(event)">
+                    <div class="form-group">
+                         <label for="loginEmail">Email</label>
+                         <input type="email" id="loginEmail" required placeholder="youremail@email.com">
+                    </div>
+
+                    <div class="form-group">
+                         <label for="loginPassword">Password</label>
+                         <input type="password" id="loginPassword" required placeholder="........">
+                    </div>
+
+                    <div id="loginError class="error-message"></div>
+                    <button type="submit" class="btn-submit">Log In</button>
+               </form>
+               <p class="form-footer">Don't have an account?
+                    <a onclick="switchToRegister()">Sign up</a>
+               </p>
+          </div>
+     </div>
+
+     <div class="modal" id="registerModal">
+          <div class="modal-content">
+               <span class="close-modal" onclick="closeRegisterModal()">&times;</span>
+               <h2>Join StudySync</h2>
+               <p class="modal-subtitle">Create your account and start scheduling smarter</p>
+               <form onsubmit="register(event)">
+                    <div class="form-group">
+                         <label for="registerName">Full Name</label>
+                         <input type="text" id="registerName" required placeholder="John Smith">
+                    </div>
+
+                    <div class="form-group">
+                         <label for="registerEmail">Email</label>
+                         <input type="email" id="registerEmail" required placeholder="youremail@email.com">
+                    </div>
+
+                    <div class="form-group">
+                         <label for="registerPassword">Password</label>
+                         <input type="password" id="registerPassword" required minlength="8" placeholder="........">
+                         <small style="color#666;">Minimum 8 characters</small>
+                    </div>
+
+                    <div id="registerError" class="error-message"></div>
+                    <div id="registerSuccess" class="success-message"></div>
+
+                    <button type="submit" class="btn-submit">Create Account</button>
+               </form>
+               <p class="form-footer">
+                    Already have an account?
+                    <a onclick="switchToLogin()">Log in</a>
+               </p>
+          </div>
+     </div>
+
+     <script>
+          window.onload = function() {
+               checkLoginStatus();
+          }
+          function checkLoginStatus() {
+               const currentUser = localStorage.getItem('currentUser');
+               if (currentUser) {
+                    const user = JSON.parse(currentUser);
+                    showUserMenu(user.name);
+               }
+          }
+
+          function register(event) {
+               event.preventDefault();
+               const name = document.getElementById('registerName').value;
+               const email = document.getElementById('registerEmail').value;
+               const pw = document.getElementById('registerPassword').value;
+
+               let users = JSON.parse(localStorage.getItem('users')) || [];
+
+               if (users.find(user => user.email === email)) {
+                    document.getElementById('registerError').textContent = 'Email already registered!';
+                    return;
+               }
+               const newUser = {
+                    name: name,
+                    email: email,
+                    password: pw,
+                    createdAt: new Date().toISOString()
+               };
+               users.push(newUser);
+               localStorage.setItem('users', JSON.stringify(users));
+
+               document.getElementById('registerError').textContent = '';
+               document.getElementById('registerSuccess').textContent = 'Account Created! Signing in...';
+
+               setTimeout(() => {
+                    localStorage.setItem('currentUser', JSON.stringify(newUser));
+                    closeRegisterModal();
+                    showUserMenu(newUser.name);
+                    location.reload();
+               }, 1500);
+          }
+
+          function login(event) {
+               event.preventDefault();
+
+               const email = document.getElementById('loginEmail').value;
+               const pw = document.getElementById('loginPassword').value;
+
+               const users = JSON.parse(localStorage.getItem('users')) || [];
+
+               const user = users.find(usr => usr.email === email && usr.password === pw);
+
+               if (user) {
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    closeLoginModal();
+                    showUserMenu(user.name);
+                    location.reload();
+               } else {
+                    document.getElementById('loginError').textContent = 'Invalid email or password!';
+               }
+          }
+          function logout() {
+               localStorage.removeItem('currentUser');
+               location.reload();
+          }
+          function showUserMenu(userName) {
+               document.getElementById('authButtons').style.display = 'none';
+               document.getElementById('userMenu').style.display = 'block';
+               document.getElementById('userName').textContent = userName;
+          }
+          function toggleDropdown() {
+               const dropdown = document.getElementById('dropdown');
+               dropdown.classList.toggle('active');
+          }
+          function openLoginModal() {
+               document.getElementById('loginModal').classList.add('active');
+               document.getElementById('loginError').textContent = '';
+          }
+          function closeLoginModal() {
+               document.getElementById('loginModal').classList.remove('active');
+          }
+          function openRegisterModal() {
+               document.getElementById('registerModal').classList.add('active');
+               document.getElementById('registerError').textContent = '';
+               document.getElementById('registerSuccess').textContent = '';
+          }
+          function closeRegisterModal() {
+               document.getElementById('registerModal').classList.remove('active');
+          }
+          function switchToRegister() {
+               closeLoginModal();
+               openRegisterModal();
+          }
+          function switchToLogin() {
+               closeRegisterModal();
+               openLoginModal();
+          }
+
+          window.onclick = function(event) {
+               if (event.target.classList.contains('modal')) {
+                    event.target.classList.remove('active');
+               }
+          }
+     </script>
 </body>
 </html>
