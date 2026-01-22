@@ -272,9 +272,17 @@ body {
                               <button class="btn-login" onclick="openLoginModal()">Login</button>
                               <button class="btn-register" onclick="openRegisterModal()">Register</button>
                         </div>
-                        
-                        
-            </div>
+                        <div class="user-menu" id="userMenu">
+                             <div class="user-name" onclick="toggleDropDown()">
+                                  <span id="userName">User</span>
+                             </div>
+                             <div class="dropdown" id="dropdown">
+                                  <a href="#dashboard">Dashboard</a>
+                                  <a href="#profile">Profile</a>
+                                  <button class="btn-logout" onclick="logout()">Logout</button>
+                             </div>
+                        </div>
+                  </div>
       </div>
 </nav>
 
