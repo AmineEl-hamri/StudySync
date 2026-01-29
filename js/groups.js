@@ -1,4 +1,3 @@
-
 let tempMembers = [];
 
 function createGroup(event) {
@@ -113,7 +112,8 @@ function loadGroups() {
     <div class="group-members">
       ${membersHtml}
       ${moreMembers}
-      </div>
+    </div>
+    `;
 
     groupsGrid.appendChild(groupCard);
     });
