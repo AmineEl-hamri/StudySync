@@ -73,7 +73,7 @@ function renderMembersList() {
     <span>${email}</span>
     <button class="btn-remove-member" onclick="removeMember('${email}')">Remove</button>`;
     membersList.appendChild(memberItem);
-  }};
+  });
 }
 
 function loadGroups() {
@@ -113,7 +113,7 @@ function loadGroups() {
     <div class="group-members">
       ${membersHtml}
       ${moreMembers}
-      </div>;
+      </div>
 
     groupsGrid.appendChild(groupCard);
     });
