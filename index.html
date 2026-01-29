@@ -64,6 +64,47 @@
           </div>
      </div>
 </section>
+
+     <section id="groupDetails" class="group-details">
+          <div class="container">
+               <button class="btn-back" onclick="backToDashboard()"> Back to Dashboard</button>
+               <div class="group-info">
+                    <h1 id="groupDetailsName">Group Name</h1>
+                    <p id="groupDetailsDescription">Group Description</p>
+                    <p><strong>Members:</strong> <span id="groupDetailsMemberCount">0</span> </p>
+               </div>
+               <div class="availability-section">
+                    <h2>Set Your Availability</h2>
+                    <p>Click on time slots when you're available to meet</p>
+                    <div class="legend">
+                         <span class="legend-item"><span class="legend-box available"></span>Available</span>
+                         <span class="legend-item"><span class="legend-box unavailable"></span>Unavailable</span>
+                    </div>
+                    <div class="availability-grid" id="availabilityGrid">
+                    </div>
+
+                    <div class="availability-actions">
+                         <button class="btn-primary" onclick="saveAvailability()">Save My Availability</button>
+                         <button class="btn-secondary" onclick="clearAvailability()">Clear All</button>
+                    </div>
+               </div>
+               <div class="availability-status">
+                    <h3>Availability Status</h3>
+                    <div id="availabilityStatus">
+                    </div>
+               </div>
+
+               <div class="schedule-section">
+                    <button class="btn-create" onclick="findMeetingTimes()">Find Optimal Meeting Times</button>
+               </div>
+
+               <div class="schedule-results" id="scheduleResults" style="display: none;">
+                    <h2> Recommended Meeting Times</h2>
+                    <div id="recommendedTimes">
+                    </div>
+               </div>
+          </div>
+     </section>
      <div class ="modal" id="loginModal">
           <div class="modal-content">
                <span class="close-modal" onclick="closeLoginModal()">&times;</span>
