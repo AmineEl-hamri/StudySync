@@ -149,5 +149,3 @@ function showAvailabilityStatus(group) {
     statusDiv.innerHTML = html;
 }
                                                       
-
-}
