@@ -149,3 +149,89 @@ function showAvailabilityStatus(group) {
     statusDiv.innerHTML = html;
 }
                                                       
+function findMeetingTimes() {
+  const availabilityData = JSON.parse(localStorage.getItem('availability')) || {};
+  const groupAvailability = availabilityData[currentGroupId] || {};
+
+  const submissionCount = Object.keys(groupAvailability).length;
+
+  if (submissionCount < 2) {
+    alert('Need at least 2 members to submit availability!');
+    return;
+  }
+
+  const optimalTimes = runCSPAlgorithm(groupAvailability);
+
+  displayScheduleResults(optimalTimes, groupAvailability);
+}
+
+function runCSPAlgorithm(groupAvailability) {
+  const slotCounts = {};
+
+  Object.values(groupAvailability).forEach(userAvail => {
+    userAvail.slots.forEach(slot => {
+      if (!slotCounts[slot]) {
+        slotCounts[slot] = {
+          count: 0, members: []
+        };
+      }
+      slotCounts[slot].count++;
+
+      const email = Object.keys(groupAvailability).find(
+        key => groupAvailability[key] === userAvail);
+      slotCounts[slot].members.push(email);
+    });
+  });
+
+  const sortedSlots = Object.entries(slotCounts)
+  .sort((a, b) => b[1].count = a[1].count)
+  .slice(0, 5);
+
+  return sortedSlots.map(([slotId, data]) => {
+    const [dayindex, time] = slotId.split('-');
+    return {
+      day: DAYS[parseInt(dayIndex)],
+      time: time,
+      availableCount: data.count,
+      totalMembers: Object.keys(groupAvailability).length,
+      members: data.members,
+      score: (data.count / Object.keys(groupAvailability).length * 100).toFixed(0)
+    };
+  });
+}
+
+function displayScheduleResults(optimalTimes, groupAvailability) {
+  const resultsDiv = document.getElementById('scheduleResults');
+  const timesDiv = document.getElementById('recommendedTimes');
+
+  if (optimalTimes.length === 0) {
+    timesDiv.innerHTML = '<p>No times found. Try selecting more availability!</p>';
+    resultsDiv.style.display = 'block';
+    return;
+  }
+  
+  let html = '';
+
+  optimalTimes.forEach((option, index) => {
+    html += `
+        <div class="time-option">
+            <h3>Option ${index + 1}: ${option.day} at ${option.time}</h3>
+            <p>
+                <span class="time-option-score">${option.score}% Match</span>
+                ${option.availableCount} of ${option.totalMembers} members available
+            </p>
+            <p><strong>Available members:</strong></p>
+            <div class="available-members">
+                ${option.members.map(email => 
+                    `<span class="member-badge">${email.split('@')[0]}</span>`
+                ).join('')}
+            </div>
+        </div>
+    `;
+  });
+
+  timesDiv.innerHTML = html;
+  resultsDiv.style.display = 'block';
+
+  resultsDiv.scrollIntoView({behavior: 'smooth', block: 'start' });
+}
