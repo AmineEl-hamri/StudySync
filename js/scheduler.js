@@ -184,11 +184,11 @@ function runCSPAlgorithm(groupAvailability) {
   });
 
   const sortedSlots = Object.entries(slotCounts)
-  .sort((a, b) => b[1].count = a[1].count)
+  .sort((a, b) => b[1].count - a[1].count)
   .slice(0, 5);
 
   return sortedSlots.map(([slotId, data]) => {
-    const [dayindex, time] = slotId.split('-');
+    const [dayIndex, time] = slotId.split('-');
     return {
       day: DAYS[parseInt(dayIndex)],
       time: time,
