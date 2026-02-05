@@ -469,6 +469,42 @@ body {
             padding: 0;
 }
 
+.import-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f0f9ff;
+            border-radius: 8px;
+}
+.btn-import-google {
+            padding: 0.75rem 1.5rem;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+}
+
+.btn-import-google:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(66, 133, 244, 0.3);
+}
+
+.connection-status {
+            color: #10B981;
+            font-weight: 600;
+}
+
+.connection-status.connected::before {
+            content: "✓ ";
+}
+
 .time-label {
     background: #f9fafb;
     padding: 0.5rem;
