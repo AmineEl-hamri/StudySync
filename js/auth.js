@@ -1,65 +1,91 @@
-          window.onload = function() {
-               checkLoginStatus();
-          }
-          function checkLoginStatus() {
-               const currentUser = localStorage.getItem('currentUser');
+
+const API_URL = 'http://localhost:5000';
+
+window.onload = function() {
+          checkLoginStatus();
+}
+function checkLoginStatus() {
+          const currentUser = localStorage.getItem('currentUser');
                if (currentUser) {
                     const user = JSON.parse(currentUser);
                     showUserMenu(user.name);
                }
-          }
+}
 
-          function register(event) {
-               event.preventDefault();
-               const name = document.getElementById('registerName').value;
-               const email = document.getElementById('registerEmail').value;
-               const pw = document.getElementById('registerPassword').value;
+function register(event) {
+          event.preventDefault();
 
-               let users = JSON.parse(localStorage.getItem('users')) || [];
+          const name = document.getElementById('registerName').value;
+          const email = document.getElementById('registerEmail').value;
+          const password = document.getElementById('registerPassword').value;
+    
+          const errorDiv = document.getElementById('registerError');
+          const successDiv = document.getElementById('registerSuccess');
+    
+          errorDiv.textContent = '';
+          successDiv.textContent = '';
 
-               if (users.find(user => user.email === email)) {
-                    document.getElementById('registerError').textContent = 'Email already registered!';
-                    return;
-               }
-               const newUser = {
-                    name: name,
-                    email: email,
-                    password: pw,
-                    createdAt: new Date().toISOString()
-               };
-               users.push(newUser);
-               localStorage.setItem('users', JSON.stringify(users));
+          fetch(`${API_URL}/api/register`, {
+                    method: 'POST',
+                    headers: {
+                              'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({name, email, password })
+          })
+          .then(response => response.json())
+          .then(data => {
+                    if (data.success) {
+                              successDiv.textContent = 'Account created successfully! Logging in...';
 
-               document.getElementById('registerError').textContent = '';
-               document.getElementById('registerSuccess').textContent = 'Account Created! Signing in...';
+                              localStorage.setItem('currentUser', JSON.stringify(data.user));
 
-               setTimeout(() => {
-                    localStorage.setItem('currentUser', JSON.stringify(newUser));
-                    closeRegisterModal();
-                    showUserMenu(newUser.name);
-                    location.reload();
-               }, 1500);
-          }
+                              setTimeout(() => {
+                                        closeRegisterModal();
+                                        showUserMenu(data.user.name);
+                                        showDashboard();
+                              }, 1500);
+                    } else {
+                              errorDiv.textContent = data.error || 'Registration failed';
+                    }
+          })
+          .catch(error => {
+                    console.error('Registration error:', error);
+                    errorDiv.textContent = 'Network error. Please try again.';
+          });
+}
 
-          function login(event) {
-               event.preventDefault();
+function login(event) {
+          event.preventDefault();
 
-               const email = document.getElementById('loginEmail').value;
-               const pw = document.getElementById('loginPassword').value;
+          const email = document.getElementById('loginEmail').value;
+          const password = document.getElementById('loginPassword').value;
 
-               const users = JSON.parse(localStorage.getItem('users')) || [];
+          const errorDiv = document.getElementById('loginError');
+          errorDiv.textContent = '';
 
-               const user = users.find(usr => usr.email === email && usr.password === pw);
-
-               if (user) {
-                    localStorage.setItem('currentUser', JSON.stringify(user));
-                    closeLoginModal();
-                    showUserMenu(user.name);
-                    location.reload();
-               } else {
-                    document.getElementById('loginError').textContent = 'Invalid email or password!';
-               }
-          }
+          fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                              'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({email, password})
+          })
+          .then(response => response.json())
+          .then(data => {
+                    if (data.success) {
+                              localStorage.setItem('currentUser', JSON.stringify(data.user));
+                              closeLoginModal();
+                              showUserMenu(data.user.name);
+                              showDashboard();
+                    } else {
+                              errorDiv.textContent = data.error || 'Invalid credentials';
+                    }
+          })
+          .catch(error => {
+                    console.error('Login error:' error);
+                    errorDiv.textContent = 'Network error. Please try again.';
+          });
+}
           function logout() {
                localStorage.removeItem('currentUser');
                location.reload();
