@@ -647,3 +647,26 @@ body {
         flex-direction: column;
     }
 }
+
+.btn-import {
+    padding: 0.75rem 1.5rem;
+    background: #10B981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1rem;
+}
+
+.btn-import:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+.btn-import:disabled {
+    background: #9CA3AF;
+    cursor: not-allowed;
+    transform: none;
+}
