@@ -1,5 +1,3 @@
-
-const API_URL = 'http://localhost:5000';
 let currentGroupId = null;
 let selectedSlots = new Set();
 
