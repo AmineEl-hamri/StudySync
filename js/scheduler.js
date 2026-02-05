@@ -1,3 +1,5 @@
+
+const API_URL = 'http://localhost:5000';
 let currentGroupId = null;
 let selectedSlots = new Set();
 
@@ -5,28 +7,34 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 
 function viewGroup(groupId) {
-  currentGroupId = groupId;
-
-  const groups = JSON.parse(localStorage.getItem('groups')) || [];
-  const group = groups.find(g => g.id === groupId);
-    
-  if (!group) {
-      alert('Group not found!');
-      return;
-  }
-
-  document.getElementById('dashboard').classList.remove('active');
-  document.getElementById('groupDetails').classList.add('active');
-
-  document.getElementById('groupDetailsName').textContent = group.name;
-  document.getElementById('groupDetailsDescription').textContent = group.description || 'No description.';
-  document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
-
-  generateAvailabilityGrid();
-
-  loadUserAvailability(groupId);
-
-  showAvailabilityStatus(group);
+  currentGroupId = groupId;    
+  fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              const group = data.groups.find(g => g.id === groupId);
+              
+              if (!group) {
+                  alert('Group not found!');
+                  return;
+              }
+                
+              document.getElementById('dashboard').classList.remove('active');
+              document.getElementById('groupDetails').classList.add('active');
+                
+              document.getElementById('groupDetailsName').textContent = group.name;
+              document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
+              document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
+                
+              generateAvailabilityGrid();
+                
+              loadAvailability(groupId);
+          }
+      })
+        .catch(error => {
+            console.error('View group error:', error);
+            alert('Failed to load group details');
+        });
 }
 
 function backToDashboard() {
@@ -72,31 +80,37 @@ function toggleSlot(slotId) {
 }
 
 function saveAvailability() {
-  if (selectedSlots.size === 0) {
-    alert('Please select at least one slot!');
-
-  return;
-  }
-
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-  let availabilityData = JSON.parse(localStorage.getItem('availability')) || {};
-
-  if (!availabilityData[currentGroupId]) {
-    availabilityData[currentGroupId] = {};
-  }
-
-  availabilityData[currentGroupId][currentUser.email] = {
-    slots: Array.from(selectedSlots), savedAt: new Date().toISOString()
-  };
-
-  localStorage.setItem('availability', JSON.stringify(availabilityData));
-
-  alert('Availability saved successfully!');
-
-  const groups = JSON.parse(localStorage.getItem('groups')) || [];
-  const group = groups.find(g => g.id === currentGroupId);
-  showAvailabilityStatus(group);
+    if (selectedSlots.size === 0) {
+        alert('Please select at least one time slot!');
+        return;
+    }
+    
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    fetch(`${API_URL}/api/availability`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            group_id: currentGroupId,
+            user_id: currentUser.id,
+            slots: Array.from(selectedSlots)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(' Availability saved successfully!');
+            loadAvailability(currentGroupId);
+        } else {
+            alert('Failed to save availability: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Save availability error:', error);
+        alert('Network error. Please try again.');
+    });
 }
 
 function clearAvailability() {
@@ -106,98 +120,85 @@ function clearAvailability() {
   });
 }
 
-function loadUserAvailability(groupId) {
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  const availabilityData = JSON.parse(localStorage.getItem('availability')) || {};
-
-  if (availabilityData[groupId] && availabilityData[groupId][currentUser.email]) {
-    const userAvailability = availabilityData[groupId][currentUser.email];
-    selectedSlots = new Set(userAvailability.slots);
-
-    selectedSlots.forEach(slotId => {
-      const slotElement = document.querySelector(`[data-slot="${slotId}"]`);
-      if (slotElement) {
-        slotElement.classList.add('selected');
-      }
-    });
-  }
+function loadAvailability(groupId) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    fetch(`${API_URL}/api/availability/${groupId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const availability = data.availability;
+                
+                if (availability[currentUser.email]) {
+                    selectedSlots = new Set(availability[currentUser.email].slots);
+                    
+                    selectedSlots.forEach(slotId => {
+                        const slotElement = document.querySelector(`[data-slot="${slotId}"]`);
+                        if (slotElement) {
+                            slotElement.classList.add('selected');
+                        }
+                    });
+                }
+                
+                showAvailabilityStatus(availability);
+            }
+        })
+        .catch(error => {
+            console.error('Load availability error:', error);
+        });
 }
 
-function showAvailabilityStatus(group) {
-  const statusDiv = document.getElementById('availabilityStatus');
-  const availabilityData = JSON.parse(localStorage.getItem('availability')) || {};
-  const groupAvailability = availabilityData[currentGroupId] || {};
+
+function showAvailabilityStatus(availability) {
+    const statusDiv = document.getElementById('availabilityStatus');
     
-    let html = '';
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
-    group.members.forEach(memberEmail => {
-        const hasSubmitted = groupAvailability[memberEmail] !== undefined;
-        const statusClass = hasSubmitted ? 'submitted' : 'pending';
-        const statusText = hasSubmitted ? '✓ Submitted' : '⏳ Pending';
-        
-        html += `
-            <div class="member-status">
-                <span class="status-indicator ${statusClass}"></span>
-                <span><strong>${memberEmail.split('@')[0]}</strong></span>
-                <span style="margin-left: auto; color: ${hasSubmitted ? '#10B981' : '#F59E0B'};">
-                    ${statusText}
-                </span>
-            </div>
-        `;
-    });
-    
-    statusDiv.innerHTML = html;
+    fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const group = data.groups.find(g => g.id === currentGroupId);
+                if (!group) return;
+                
+                let html = '';
+                
+                group.members.forEach(memberEmail => {
+                    const hasSubmitted = availability[memberEmail] !== undefined;
+                    const statusClass = hasSubmitted ? 'submitted' : 'pending';
+                    const statusText = hasSubmitted ? '✓ Submitted' : '⏳ Pending';
+                    
+                    html += `
+                        <div class="member-status">
+                            <span class="status-indicator ${statusClass}"></span>
+                            <span><strong>${memberEmail.split('@')[0]}</strong></span>
+                            <span style="margin-left: auto; color: ${hasSubmitted ? '#10B981' : '#F59E0B'};">
+                                ${statusText}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                statusDiv.innerHTML = html;
+            }
+        });
 }
                                                       
 function findMeetingTimes() {
-  const availabilityData = JSON.parse(localStorage.getItem('availability')) || {};
-  const groupAvailability = availabilityData[currentGroupId] || {};
-
-  const submissionCount = Object.keys(groupAvailability).length;
-
-  if (submissionCount < 2) {
-    alert('Need at least 2 members to submit availability!');
-    return;
-  }
-
-  const optimalTimes = runCSPAlgorithm(groupAvailability);
-
-  displayScheduleResults(optimalTimes, groupAvailability);
-}
-
-function runCSPAlgorithm(groupAvailability) {
-  const slotCounts = {};
-
-  Object.values(groupAvailability).forEach(userAvail => {
-    userAvail.slots.forEach(slot => {
-      if (!slotCounts[slot]) {
-        slotCounts[slot] = {
-          count: 0, members: []
-        };
-      }
-      slotCounts[slot].count++;
-
-      const email = Object.keys(groupAvailability).find(
-        key => groupAvailability[key] === userAvail);
-      slotCounts[slot].members.push(email);
-    });
-  });
-
-  const sortedSlots = Object.entries(slotCounts)
-  .sort((a, b) => b[1].count - a[1].count)
-  .slice(0, 5);
-
-  return sortedSlots.map(([slotId, data]) => {
-    const [dayIndex, time] = slotId.split('-');
-    return {
-      day: DAYS[parseInt(dayIndex)],
-      time: time,
-      availableCount: data.count,
-      totalMembers: Object.keys(groupAvailability).length,
-      members: data.members,
-      score: (data.count / Object.keys(groupAvailability).length * 100).toFixed(0)
-    };
-  });
+    // Call API to run CSP algorithm
+    fetch(`${API_URL}/api/schedule/${currentGroupId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayScheduleResults(data.optimal_times);
+            } else {
+                alert(data.error || 'Failed to find optimal times');
+            }
+        })
+        .catch(error => {
+            console.error('Find times error:', error);
+            alert('Network error. Please try again.');
+        });
 }
 
 function displayScheduleResults(optimalTimes, groupAvailability) {
