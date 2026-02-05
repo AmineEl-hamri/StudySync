@@ -82,7 +82,7 @@ function login(event) {
                     }
           })
           .catch(error => {
-                    console.error('Login error:' error);
+                    console.error('Login error:', error);
                     errorDiv.textContent = 'Network error. Please try again.';
           });
 }
