@@ -6,6 +6,14 @@ const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00
 
 function viewGroup(groupId) {
   currentGroupId = groupId;    
+
+  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+  if (!currentUser) {
+    alert('Please log in first!');
+    openLoginModal();
+    return;
+  }
   fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
       .then(response => response.json())
       .then(data => {
