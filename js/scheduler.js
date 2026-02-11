@@ -257,14 +257,11 @@ function importGoogleCalendar() {
     importBtn.textContent = '🔄 Connecting...';
     
     // Initiate OAuth flow
-    fetch(`${API_URL}/api/oauth/google/initiate`, {
-        method: 'POST',
+    fetch(`${API_URL}/api/oauth/google/initiate?user_id=${currentUser.id}`, {
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            user_id: currentUser.id
-        })
+        }
     })
     .then(response => response.json())
     .then(data => {
