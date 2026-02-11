@@ -255,7 +255,26 @@ function importGoogleCalendar() {
     const importBtn = document.getElementById('importCalendarBtn');
     importBtn.disabled = true;
     importBtn.textContent = '🔄 Connecting...';
-    
+
+  fetch(`${API_URL}/api/oauth/status/${currentUser.id}`)
+  .then(response => response.json())
+  .then(data => {
+    if (data.success && data.google_connected) {
+      importCalendarEvents();
+    } else {
+      startOAuthFlow(currentUser.id, importBtn);
+    }
+  })
+  .catch(error => { 
+    console.error('OAuth status check error:', error);
+    importBtn.disabled = false;
+    importBtn.textContent = '📅 Import from Google Calendar';
+  });
+}
+
+function startOAuthFlow(userId, importBtn) {
+  importBtn.textContent = '🔄 Connecting...';
+  
     // Initiate OAuth flow
     fetch(`${API_URL}/api/oauth/google/initiate?user_id=${currentUser.id}`, {
         method: 'GET',
