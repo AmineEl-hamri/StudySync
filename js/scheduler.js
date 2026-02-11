@@ -308,13 +308,13 @@ function importCalendarEvents() {
     importBtn.textContent = '⏳ Importing events...';
     
     // Call import endpoint
-    fetch(`${API_URL}/api/calendar/import/${currentUser.id}`, {
+    fetch(`${API_URL}/api/calendar/import/${currentGroupId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            group_id: currentGroupId,
+            user_id: currentUser.id,
             start_date: startDate.toISOString(),
             end_date: endDate.toISOString()
         })
