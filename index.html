@@ -191,6 +191,12 @@
                          </div>
 
                          <div class="form-group">
+                              <label> Meeting Location</label>
+                              <input type="text" id="meetingLocation" placeholder="Enter meeting address">
+                              <button onclick="saveMeetingLocation()">Save Location</button>
+                         </div>
+
+                         <div class="form-group">
                               <label>Group Members</label>
                               <div class="member-input-group">
                                    <input type="email" id="memberEmail" placeholder="member@email.com">
@@ -207,7 +213,24 @@
                     </form>
                </div>
           </div>
-          
+     <div id="locationModal" class="modal">
+          <div class="modal-content">
+               <span class="close" onclick="closeLocationModal()">&times;</span>
+               <h2>Location Settings</h2>
+
+               <div class="form-group">
+                    <label>Home Address</label>
+                    <input type="text" id="homeAddress" placeholder="123 Street Road, London, UK">
+               </div>
+
+               <div class="form-group">
+                    <label>Work/Uni Address</label>
+                    <input type="text" id="workAddress" placeholder="University Campus, London UK">
+               </div>
+
+               <button onclick="saveLocations()">Save Locations</button>
+          </div>
+     </div>
     <script src="js/auth.js"></script>
      <script src="js/groups.js"></script>
      <script src="js/main.js"></script>
