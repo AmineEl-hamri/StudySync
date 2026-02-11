@@ -220,6 +220,16 @@ function displayScheduleResults(optimalTimes, groupAvailability) {
   let html = '';
 
   optimalTimes.forEach((option, index) => {
+    let travelInfoHtml = '';
+
+    if (option.travel_info && Object.keys(option.travel_info).length > 0) {
+      travelInfoHtml = '<div class="travel_info"><p><strong>Travel times:</strong></p>';
+      for (const [member, minutes] of Object.entries(option.travel_info)) {
+        travelInfoHtml += `<span class="travel-badge">${member.split('@')[0]}: ${minutes} min </span>`;
+      }
+      travelInfoHtml += '</div>';
+    }
+    
     html += `
         <div class="time-option">
             <h3>Option ${index + 1}: ${option.day} at ${option.time}</h3>
@@ -233,6 +243,7 @@ function displayScheduleResults(optimalTimes, groupAvailability) {
                     `<span class="member-badge">${email.split('@')[0]}</span>`
                 ).join('')}
             </div>
+            ${travelInfoHtml}
         </div>
     `;
   });
