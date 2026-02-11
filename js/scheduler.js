@@ -342,7 +342,7 @@ function importCalendarEvents() {
         },
         body: JSON.stringify({
             user_id: currentUser.id,
-            start_date: monday.toISOString,
+            start_date: monday.toISOString(),
             end_date: sunday.toISOString()
         })
     })
