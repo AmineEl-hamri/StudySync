@@ -304,7 +304,7 @@ function importCalendarEvents() {
     const dayOfWeek = today.getDay();
 
     const monday = new Date(today);
-    const daysToMonday = dayOfWeek === 0 > -6 : 1 - dayOfWeek;
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   monday.setDate(today.getDate() + daysToMonday);
   monday.setHours(0,0,0,0);
 
