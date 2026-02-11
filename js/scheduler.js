@@ -299,13 +299,21 @@ function importGoogleCalendar() {
 function importCalendarEvents() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
-    // Get date range (next 30 days)
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 30);
-    
+    // Calculate current week
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+
+    const monday = new Date(today);
+    const daysToMonday = dayOfWeek === 0 > -6 : 1 - dayOfWeek;
+  monday.setDate(today.getDate() + daysToMonday);
+  monday.setHours(0,0,0,0);
+
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  
     const importBtn = document.getElementById('importCalendarBtn');
-    importBtn.textContent = '⏳ Importing events...';
+    importBtn.textContent = '⏳ Importing this week...';
     
     // Call import endpoint
     fetch(`${API_URL}/api/calendar/import/${currentGroupId}`, {
@@ -315,14 +323,15 @@ function importCalendarEvents() {
         },
         body: JSON.stringify({
             user_id: currentUser.id,
-            start_date: startDate.toISOString(),
-            end_date: endDate.toISOString()
+            start_date: monday.toISOString,
+            end_date: sunday.toISOString()
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(`✅ Success! Imported ${data.imported_events} events.\n${data.available_slots} available time slots found!`);
+          const weekStr = `${monday.toLocaleDateString()} - ${sunday.toLocaleDateString()}`;
+            alert(`✅ Success! Imported this week (${weekStr})\n${data.slots_count} available time slots found!`);
             
             // Reload availability to show imported data
             loadAvailability(currentGroupId);
