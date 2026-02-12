@@ -235,7 +235,7 @@ function displayScheduleResults(optimalTimes, groupAvailability) {
             <h3>Option ${index + 1}: ${option.day} at ${option.time}</h3>
             <p>
                 <span class="time-option-score">${option.score}% Match</span>
-                ${option.availableCount} of ${option.totalMembers} members available
+                ${option.available_count} of ${option.total_members} members available
             </p>
             <p><strong>Available members:</strong></p>
             <div class="available-members">
