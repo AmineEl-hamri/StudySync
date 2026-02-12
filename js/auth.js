@@ -88,12 +88,18 @@ function login(event) {
 }
           function logout() {
                localStorage.removeItem('currentUser');
+               document.getElementById('userMenu').style.display = 'none';
+               document.getElementById('authButtons').style.display = 'flex';
+               document.getElementById('dashboardLink').style.display = 'none';
+               document.getElementById('locationSettingsBtn').style.display = 'none';
                location.reload();
           }
           function showUserMenu(userName) {
                document.getElementById('authButtons').style.display = 'none';
                document.getElementById('userMenu').style.display = 'block';
                document.getElementById('userName').textContent = userName;
+                    document.getElementById('dashboardLink').style.display = 'block';
+                    document.getElementById('locationSettingsBtn').style.display = 'block';
           }
           function toggleDropdown() {
                const dropdown = document.getElementById('dropdown');
