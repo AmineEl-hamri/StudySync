@@ -18,6 +18,9 @@
                   <a onclick="showDashboard()" style="display: none;" id="dashboardLink">Dashboard</a>
                   <a href="#about">About</a>
                   <a href="#contact">Contact</a>
+                       <button onclick="openLocationSettings()" class="settings-btn" style="display: none;" id="locationSettingsBtn">
+                            My Locations
+                       </button>
                         <div class="auth-buttons" id="authButtons">
                               <button class="btn-login" onclick="openLoginModal()">Login</button>
                               <button class="btn-register" onclick="openRegisterModal()">Register</button>
@@ -72,6 +75,18 @@
                     <h1 id="groupDetailsName">Group Name</h1>
                     <p id="groupDetailsDescription">Group Description</p>
                     <p><strong>Members:</strong> <span id="groupDetailsMemberCount">0</span> </p>
+               </div>
+               <div class="location-section">
+                    <label> Meeting Location</label>
+                    <p style="color: #6B7280; font-size: 14px; margin: 5px 0 10px 0;">
+                         Where will this group meet? This helps calculate travel times.
+                    </p>
+                    <div class="location-input-group">
+                         <input type="text" id="meetingLocation" placeholder="e.g. Stockwell Library, London UK">
+                         <button onclick="saveMeetingLocation()">Save Location </button>
+                    </div>
+                    <div id="currentMeetingLocation" style="margin-top: 10px; font-size: 14px; color: #4F46E5;">
+                    </div>
                </div>
                <div class="availability-section">
                     <h2>Set Your Availability</h2>
@@ -191,12 +206,6 @@
                          </div>
 
                          <div class="form-group">
-                              <label> Meeting Location</label>
-                              <input type="text" id="meetingLocation" placeholder="Enter meeting address">
-                              <button onclick="saveMeetingLocation()">Save Location</button>
-                         </div>
-
-                         <div class="form-group">
                               <label>Group Members</label>
                               <div class="member-input-group">
                                    <input type="email" id="memberEmail" placeholder="member@email.com">
@@ -216,19 +225,27 @@
      <div id="locationModal" class="modal">
           <div class="modal-content">
                <span class="close" onclick="closeLocationModal()">&times;</span>
-               <h2>Location Settings</h2>
+               <h2>My Locations</h2>
+               <p style="color: #6B7280; margin-bottom: 20px;">Set your home or work location to calculate travel times.</p>
 
                <div class="form-group">
                     <label>Home Address</label>
                     <input type="text" id="homeAddress" placeholder="123 Street Road, London, UK">
+                    <button onclick="saveLocation('home')" style="margin-top: 10px; width: 100%;">
+                         Save Home Location
+                    </button>
                </div>
 
                <div class="form-group">
                     <label>Work/Uni Address</label>
                     <input type="text" id="workAddress" placeholder="University Campus, London UK">
+                    <button onclick="saveLocation('work') style="margin-top: 10px; width: 100%;">
+                         Save Work location
+                    </button>
                </div>
-
-               <button onclick="saveLocations()">Save Locations</button>
+               <div id="savedLocations" style="margin-top: 20px;">
+                    
+               </div>
           </div>
      </div>
     <script src="js/auth.js"></script>
