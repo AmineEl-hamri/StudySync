@@ -381,3 +381,163 @@ function importCalendarEvents() {
         importBtn.textContent = '📅 Import from Google Calendar';
     });
 }
+
+function openLocationSettings() {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+  if (!currentUser) {
+    alert('Please log in first!);
+    return;
+  }
+
+  loadUserLocations(currentUser.id);
+
+  document.getElementById('locationModal').style.display = 'block';
+}
+
+function closeLocationModal() {
+  document.getElementById('locationModal').style.display = 'none';
+}
+
+function loadUserLocations(userId) {
+  fetch(`${API_URL}/api/locations/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Populate input fields with saved locations
+                data.locations.forEach(loc => {
+                    if (loc.type === 'home') {
+                        document.getElementById('homeAddress').value = loc.address;
+                    } else if (loc.type === 'work') {
+                        document.getElementById('workAddress').value = loc.address;
+                    }
+                });
+                
+                displaySavedLocations(data.locations);
+            }
+        })
+        .catch(error => {
+            console.error('Load locations error:', error);
+        });
+}
+
+function displaySavedLocations(locations) {
+    const container = document.getElementById('savedLocations');
+    
+    if (locations.length === 0) {
+        container.innerHTML = '<p style="color: #9CA3AF;">No locations saved yet.</p>';
+        return;
+    }
+    
+    let html = '<h3 style="margin-bottom: 10px;">Saved Locations:</h3>';
+    
+    locations.forEach(loc => {
+        const icon = loc.type === 'home' ? '🏠' : '🏢';
+        const label = loc.type === 'home' ? 'Home' : 'Work';
+        const defaultBadge = loc.is_default ? '<span style="background: #10B981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">Default</span>' : '';
+        
+        html += `
+            <div style="background: #F3F4F6; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>${icon} ${label}</strong> ${defaultBadge}
+                        <p style="margin: 4px 0 0 0; color: #6B7280; font-size: 13px;">${loc.address}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function saveLocation(locationType) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    const address = locationType === 'home' 
+        ? document.getElementById('homeAddress').value.trim()
+        : document.getElementById('workAddress').value.trim();
+    
+    if (!address) {
+        alert('Please enter an address!');
+        return;
+    }
+    
+    fetch(`${API_URL}/api/locations`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_id: currentUser.id,
+            location_type: locationType,
+            address: address
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ ${locationType === 'home' ? 'Home' : 'Work'} location saved!`);
+            loadUserLocations(currentUser.id); // Reload to show updated list
+        } else {
+            alert('Failed to save location: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Save location error:', error);
+        alert('Network error. Please try again.');
+    });
+}
+
+function loadMeetingLocation() {
+    if (!currentGroupId) return;
+    
+    fetch(`${API_URL}/api/groups/${currentGroupId}/location`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.meeting_location) {
+                document.getElementById('meetingLocation').value = data.meeting_location;
+                document.getElementById('currentMeetingLocation').innerHTML = 
+                    `<strong>Current:</strong> ${data.meeting_location}`;
+            } else {
+                document.getElementById('currentMeetingLocation').innerHTML = 
+                    '<em style="color: #9CA3AF;">No meeting location set</em>';
+            }
+        })
+        .catch(error => {
+            console.error('Load meeting location error:', error);
+        });
+}
+
+function saveMeetingLocation() {
+    const location = document.getElementById('meetingLocation').value.trim();
+    
+    if (!location) {
+        alert('Please enter a meeting location!');
+        return;
+    }
+    
+    fetch(`${API_URL}/api/groups/${currentGroupId}/location`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            location: location
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Meeting location saved!');
+            document.getElementById('currentMeetingLocation').innerHTML = 
+                `<strong>Current:</strong> ${location}`;
+        } else {
+            alert('Failed to save location: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Save meeting location error:', error);
+        alert('Network error. Please try again.');
+    });
+}
