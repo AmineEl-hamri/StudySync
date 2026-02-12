@@ -1,4 +1,5 @@
 let tempMembers = [];
+let activeGroup = null;
 
 function createGroup(event) {
   event.preventDefault();
@@ -116,7 +117,7 @@ function loadGroups() {
                 groups.forEach(group => {
                     const groupCard = document.createElement('div');
                     groupCard.className = 'group-card';
-                    groupCard.onclick = () => viewGroup(group.id);
+                    groupCard.onclick = () => viewGroup(group);
                     
                     const membersHtml = group.members.slice(0, 3).map(email =>
                         `<span class="member-badge">${email.split('@')[0]}</span>`
@@ -149,7 +150,29 @@ function loadGroups() {
 
 
 function viewGroup(groupId) {
+    activeGroup = group;
 
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('groupDetails').style.display = 'block';
+
+    document.getElementById('groupDetailsName').textContent = group.name;
+    document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
+    document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
+
+    const currentLocationDiv = document.getElementById('currentMeetingLocation');
+    if (group.meetingLocation) {
+        currentLocationDiv.textContent = `Current location: ${group.meetingLocation}`;
+    } else {
+        currentLocationDiv.textContent = '';
+    }
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const isOwner = currentUser && currentUser.id === group.owner_id;
+
+    const locationInputGroup = document.querySelector('.location-input-group');
+    if (locationInputGroup) {
+        locationInputGroup.style.display = isOwner ? 'flex' : 'none';
+    }
 }
 
 function openCreateGroupModal() {
