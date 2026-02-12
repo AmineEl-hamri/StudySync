@@ -434,18 +434,18 @@ function displaySavedLocations(locations) {
     locations.forEach(loc => {
         const icon = loc.type === 'home' ? '🏠' : '🏢';
         const label = loc.type === 'home' ? 'Home' : 'Work';
-        const defaultBadge = loc.is_default ? '<span style="background: #10B981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">Default</span>' : '';
-        
-        html += `
-            <div style="background: #F3F4F6; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>${icon} ${label}</strong> ${defaultBadge}
-                        <p style="margin: 4px 0 0 0; color: #6B7280; font-size: 13px;">${loc.address}</p>
-                    </div>
-                </div>
-            </div>
-        `;
+      let badgeHtml = '';
+      if (loc.is_default) {
+        badgeHtml = '<span style="background: #10B981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">Default</span>';
+      }
+        html += '<div style="background: #F3F4F6; padding: 12px; border-radius: 8px; margin-bottom: 8px;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+        html += '<div>';
+        html += '<strong>' + icon + ' ' + label + '</strong> ' + badgeHtml;
+        html += '<p style="margin: 4px 0 0 0; color: #6B7280; font-size: 13px;">' + loc.address + '</p>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
     });
     
     container.innerHTML = html;
