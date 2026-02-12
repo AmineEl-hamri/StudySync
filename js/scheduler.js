@@ -287,7 +287,7 @@ function startOAuthFlow(userId, importBtn) {
   importBtn.textContent = '🔄 Connecting...';
   
     // Initiate OAuth flow
-    fetch(`${API_URL}/api/oauth/google/initiate?user_id=${currentUser.id}`, {
+    fetch(`${API_URL}/api/oauth/google/initiate?user_id=${userId}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
