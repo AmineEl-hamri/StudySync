@@ -386,7 +386,7 @@ function openLocationSettings() {
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
   if (!currentUser) {
-    alert('Please log in first!);
+    alert('Please log in first!');
     return;
   }
 
