@@ -897,3 +897,15 @@ body {
         flex: 1 1 45%;
     }
 }
+
+.location-section input:disabled {
+    background-color: #F3F4F6;
+    color: #6B7280;
+    cursor: not-allowed;
+    border-color: #D1D5DB;
+}
+
+.location-section label span {
+    font-weight: normal;
+    font-size: 12px;
+}
