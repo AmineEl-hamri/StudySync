@@ -127,7 +127,7 @@ function loadGroups() {
                 groups.forEach(group => {
                     const groupCard = document.createElement('div');
                     groupCard.className = 'group-card';
-                    groupCard.onclick = () => viewGroup(group);
+                    groupCard.onclick = () => viewGroup(group.id);
                     
                     const membersHtml = group.members.slice(0, 3).map(email =>
                         `<span class="member-badge">${email.split('@')[0]}</span>`
