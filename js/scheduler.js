@@ -222,53 +222,97 @@ function findMeetingTimes() {
         });
 }
 
-function displayScheduleResults(optimalTimes, groupAvailability) {
-  const resultsDiv = document.getElementById('scheduleResults');
-  const timesDiv = document.getElementById('recommendedTimes');
+function displayScheduleResults(optimalTimes) {
+    const resultsDiv = document.getElementById('scheduleResults');
+    const timesDiv = document.getElementById('recommendedTimes');
 
-  if (optimalTimes.length === 0) {
-    timesDiv.innerHTML = '<p>No times found. Try selecting more availability!</p>';
-    resultsDiv.style.display = 'block';
-    return;
-  }
-  
-  let html = '';
-
-  optimalTimes.forEach((option, index) => {
-    let travelInfoHtml = '';
-
-    if (option.travel_info && Object.keys(option.travel_info).length > 0) {
-      travelInfoHtml = '<div class="travel_info"><p><strong>Travel times:</strong></p>';
-      for (const [member, minutes] of Object.entries(option.travel_info)) {
-        travelInfoHtml += `<span class="travel-badge">${member.split('@')[0]}: ${minutes} min </span>`;
-      }
-      travelInfoHtml += '</div>';
+    if (optimalTimes.length === 0) {
+        timesDiv.innerHTML = '<p>No times found. Try selecting more availability!</p>';
+        resultsDiv.style.display = 'block';
+        return;
     }
     
-    html += `
-        <div class="time-option">
-            <h3>Option ${index + 1}: ${option.day} at ${option.time}</h3>
-            <p>
-                <span class="time-option-score">${option.score}% Match</span>
-                ${option.available_count} of ${option.total_members} members available
-            </p>
-            <p><strong>Available members:</strong></p>
-            <div class="available-members">
-                ${option.members.map(email => 
-                    `<span class="member-badge">${email.split('@')[0]}</span>`
-                ).join('')}
-            </div>
-            ${travelInfoHtml}
-        </div>
-    `;
-  });
+    let html = '';
 
-  timesDiv.innerHTML = html;
-  resultsDiv.style.display = 'block';
+    optimalTimes.forEach(function(option, index) {
+        // Build travel info section if available
+        let travelInfoHtml = '';
+        if (option.travel_info && Object.keys(option.travel_info).length > 0) {
+            travelInfoHtml = '<div class="travel-info">';
+            travelInfoHtml += '<p><strong>🚗 Travel Times & Departure Schedule:</strong></p>';
+            
+            for (const email in option.travel_info) {
+                const travel = option.travel_info[email];
+                const memberName = email.split('@')[0];
+                
+                // Traffic indicator based on duration
+                let trafficIcon = '🟢';  // Green - good traffic
+                let trafficText = 'Light traffic';
+                if (travel.duration_minutes > 45) {
+                    trafficIcon = '🔴';  // Red - heavy traffic
+                    trafficText = 'Heavy traffic';
+                } else if (travel.duration_minutes > 25) {
+                    trafficIcon = '🟡';  // Yellow - moderate traffic
+                    trafficText = 'Moderate traffic';
+                }
+                
+                travelInfoHtml += '<div class="travel-timeline">';
+                travelInfoHtml += '<div class="travel-member-name">' + memberName + '</div>';
+                travelInfoHtml += '<div class="timeline-row">';
+                travelInfoHtml += '<span class="timeline-step departure">🏠 Leave: <strong>' + travel.departure_time + '</strong></span>';
+                travelInfoHtml += '<span class="timeline-arrow">→</span>';
+                travelInfoHtml += '<span class="timeline-step travel">' + trafficIcon + ' ' + travel.duration_text + ' <small>(' + trafficText + ')</small></span>';
+                travelInfoHtml += '<span class="timeline-arrow">→</span>';
+                travelInfoHtml += '<span class="timeline-step arrival">📍 Arrive: <strong>' + travel.arrival_time + '</strong></span>';
+                travelInfoHtml += '</div>';
+                travelInfoHtml += '</div>';
+            }
+            
+            travelInfoHtml += '</div>';
+        }
+        
+        html += '<div class="time-option">';
+        html += '<h3>Option ' + (index + 1) + ': ' + option.day + ' at ' + option.time + '</h3>';
+        html += '<p>';
+        html += '<span class="time-option-score">' + option.score + '% Match</span>';
+        html += option.available_count + ' of ' + option.total_members + ' members available';
+        html += '</p>';
+        html += '<p><strong>Available members:</strong></p>';
+        html += '<div class="available-members">';
+        
+        for (var i = 0; i < option.members.length; i++) {
+            var memberName = option.members[i].split('@')[0];
+            html += '<span class="member-badge">' + memberName + '</span>';
+        }
+        
+        html += '</div>';
+        html += travelInfoHtml;
+        html += '</div>';
+    });
 
-  resultsDiv.scrollIntoView({behavior: 'smooth', block: 'start' });
+    timesDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
-
+function checkTrafficAlerts(optimalTimes) {
+    let alerts = [];
+    
+    optimalTimes.forEach(function(option) {
+        if (option.travel_info) {
+            for (const email in option.travel_info) {
+                const travel = option.travel_info[email];
+                if (travel.duration_minutes > 45) {
+                    alerts.push(email.split('@')[0] + ' has heavy traffic (' + travel.duration_text + ')');
+                }
+            }
+        }
+    });
+    
+    if (alerts.length > 0) {
+        return '<div class="traffic-alert">⚠️ <strong>Traffic Alert:</strong> ' + alerts.join(', ') + '</div>';
+    }
+    return '';
+}
 function importGoogleCalendar() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
