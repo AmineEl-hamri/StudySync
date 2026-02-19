@@ -31,7 +31,22 @@ function viewGroup(groupId) {
               document.getElementById('groupDetailsName').textContent = group.name;
               document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
               document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
-                
+
+            const isOwner = group.ownerID === currentUser.id;
+            const locationSection = document.querySelector('.location-section');
+            const locationInput = document.getElementById('meetingLocation');
+            const locationButton = locationSection.querySelector('button');
+            const locationLabel = locationSection.querySelector('label');
+
+            if (isOwner) {
+                    locationInput.disabled = false;
+                    locationButton.style.display = 'inline-block';
+                    locationLabel.innerHTML = '📍 Meeting Location <span style="color: #10B981; font-size: 12px; font-weight: normal;">(You are the owner)</span>';
+                } else {
+                    locationInput.disabled = true;
+                    locationButton.style.display = 'none';
+                    locationLabel.innerHTML = '📍 Meeting Location <span style="color: #6B7280; font-size: 12px; font-weight: normal;">(View Only - only owner can edit)</span>';
+                }
               generateAvailabilityGrid();
                 
               loadAvailability(groupId);
@@ -523,7 +538,8 @@ function saveMeetingLocation() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            location: location
+            location: location,
+          user_id: currentUser.id
         })
     })
     .then(response => response.json())
