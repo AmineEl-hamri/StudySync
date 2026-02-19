@@ -909,3 +909,94 @@ body {
     font-weight: normal;
     font-size: 12px;
 }
+.travel-timeline {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border-left: 4px solid #F59E0B;
+}
+
+.travel-member-name {
+    font-weight: 600;
+    color: #92400E;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.timeline-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.timeline-step {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #374151;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.timeline-step.departure {
+    border-left: 3px solid #3B82F6;
+}
+
+.timeline-step.travel {
+    border-left: 3px solid #F59E0B;
+    font-weight: 500;
+}
+
+.timeline-step.arrival {
+    border-left: 3px solid #10B981;
+}
+
+.timeline-step strong {
+    color: #1F2937;
+    font-weight: 700;
+}
+
+.timeline-step small {
+    color: #6B7280;
+    font-size: 11px;
+}
+
+.timeline-arrow {
+    color: #D1D5DB;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Traffic indicators */
+.travel-info p {
+    margin: 0 0 12px 0;
+    font-weight: 600;
+    color: #92400E;
+}
+
+/* Responsive timeline */
+@media (max-width: 768px) {
+    .timeline-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .timeline-arrow {
+        transform: rotate(90deg);
+        margin: 4px 0;
+    }
+    
+    .timeline-step {
+        width: 100%;
+    }
+}
+.traffic-alert {
+    background: #FEE2E2;
+    border-left: 4px solid #EF4444;
+    padding: 12px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+    color: #991B1B;
+}
