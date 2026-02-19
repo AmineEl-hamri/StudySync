@@ -31,11 +31,21 @@ function createGroup(event) {
         if (data.success) {
             successDiv.textContent = 'Group created successfully!';
             tempMembers = [];
-            
+
+          const newGroupId = data.group_id;
             setTimeout(() => {
                 closeCreateGroupModal();
-                loadGroups();
-            }, 1500);
+
+              fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+              .then(response => response.json())
+              .then(groupsData => {
+                if (groupsData.success) {
+                  displayGroups(groupsData.groups);
+
+                  viewGroup(newGroupId);
+                }
+              });
+            }, 1000);
         } else {
             errorDiv.textContent = data.error || 'Failed to create group';
         }
