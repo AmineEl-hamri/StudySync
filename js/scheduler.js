@@ -50,6 +50,8 @@ function viewGroup(groupId) {
               generateAvailabilityGrid();
                 
               loadAvailability(groupId);
+            loadMeetingLocation();
+            loadGroupMeetings();
           }
       })
         .catch(error => {
@@ -650,14 +652,88 @@ function scheduleMeeting(dayOfWeek, meetingTime) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Meeting scheduled successfully!');
-            loadGroupMeetings(); // Refresh meetings list
+            let message = '✅ Meeting scheduled successfully!';
+            if (data.email_sent) {
+                message += '\n📧 Email notifications sent to all members.';
+            }
+            alert(message);
+            loadGroupMeetings(); // Refresh meetings display
         } else {
             alert('Failed to schedule meeting: ' + (data.error || 'Unknown error'));
-        }
-    })
+    }
+})
     .catch(error => {
         console.error('Schedule meeting error:', error);
         alert('Network error. Please try again.');
+    });
+}
+
+function loadGroupMeetings() {
+    if (!currentGroupId) return;
+    
+    fetch(`${API_URL}/api/meetings/${currentGroupId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayGroupMeetings(data.meetings);
+            }
+        })
+        .catch(error => {
+            console.error('Load meetings error:', error);
+        });
+}
+
+function displayGroupMeetings(meetings) {
+    const container = document.getElementById('scheduledMeetings');
+    
+    if (meetings.length === 0) {
+        container.innerHTML = '<p style="color: #666;">No meetings scheduled yet.</p>';
+        return;
+    }
+    
+    let html = '';
+    
+    meetings.forEach(function(meeting) {
+        // Format date nicely
+        const date = new Date(meeting.meeting_date);
+        const formattedDate = date.toLocaleDateString('en-GB', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        
+        html += '<div class="meeting-card">';
+        html += '<div class="meeting-date">📅 ' + meeting.day_of_week + ', ' + meeting.meeting_time + '</div>';
+        html += '<p><strong>Date:</strong> ' + formattedDate + '</p>';
+        html += '<p><strong>Location:</strong> ' + (meeting.location || 'TBD') + '</p>';
+        html += '<p><strong>Scheduled by:</strong> ' + meeting.created_by_name + '</p>';
+        html += '<button class="btn-delete-meeting" onclick="deleteMeeting(' + meeting.id + ')">🗑️ Cancel Meeting</button>';
+        html += '</div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+function deleteMeeting(meetingId) {
+    if (!confirm('Are you sure you want to cancel this meeting?')) {
+        return;
+    }
+    
+    fetch(`${API_URL}/api/meetings/${meetingId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Meeting cancelled');
+            loadGroupMeetings(); // Refresh the list
+        } else {
+            alert('Failed to cancel meeting');
+        }
+    })
+    .catch(error => {
+        console.error('Delete meeting error:', error);
+        alert('Network error');
     });
 }
