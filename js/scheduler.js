@@ -606,3 +606,58 @@ function saveMeetingLocation() {
         alert('Network error. Please try again.');
     });
 }
+
+function scheduleMeeting(dayOfWeek, meetingTime) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    
+    if (!currentUser) {
+        alert('Please log in to schedule meetings');
+        return;
+    }
+    
+    // Calculate next occurrence of this day
+    const today = new Date();
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const targetDay = daysOfWeek.indexOf(dayOfWeek);
+    const currentDay = today.getDay();
+    
+    let daysUntilMeeting = targetDay - currentDay;
+    if (daysUntilMeeting <= 0) {
+        daysUntilMeeting += 7; // Next week
+    }
+    
+    const meetingDate = new Date(today);
+    meetingDate.setDate(today.getDate() + daysUntilMeeting);
+    const meetingDateStr = meetingDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    if (!confirm(`Schedule meeting for ${dayOfWeek}, ${meetingDateStr} at ${meetingTime}?`)) {
+        return;
+    }
+    
+    fetch(`${API_URL}/api/meetings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            group_id: currentGroupId,
+            day_of_week: dayOfWeek,
+            meeting_time: meetingTime,
+            meeting_date: meetingDateStr,
+            created_by: currentUser.id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Meeting scheduled successfully!');
+            loadGroupMeetings(); // Refresh meetings list
+        } else {
+            alert('Failed to schedule meeting: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Schedule meeting error:', error);
+        alert('Network error. Please try again.');
+    });
+}
