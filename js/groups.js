@@ -160,29 +160,64 @@ function loadGroups() {
 
 
 function viewGroup(groupId) {
-    activeGroup = group;
-
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('groupDetails').style.display = 'block';
-
-    document.getElementById('groupDetailsName').textContent = group.name;
-    document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
-    document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
-
-    const currentLocationDiv = document.getElementById('currentMeetingLocation');
-    if (group.meetingLocation) {
-        currentLocationDiv.textContent = `Current location: ${group.meetingLocation}`;
-    } else {
-        currentLocationDiv.textContent = '';
-    }
+    currentGroupId = groupId;    
 
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const isOwner = currentUser && currentUser.id === group.ownerId;
 
-    const locationInputGroup = document.querySelector('.location-input-group');
-    if (locationInputGroup) {
-        locationInputGroup.style.display = isOwner ? 'flex' : 'none';
+    if (!currentUser) {
+        alert('Please log in first!');
+        openLoginModal();
+        return;
     }
+    
+    fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const group = data.groups.find(g => g.id === groupId);
+                
+                if (!group) {
+                    alert('Group not found!');
+                    return;
+                }
+                
+                document.getElementById('dashboard').classList.remove('active');
+                document.getElementById('groupDetails').classList.add('active');
+                
+                document.getElementById('groupDetailsName').textContent = group.name;
+                document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
+                document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
+                
+
+                const isOwner = Number(currentUser.id) === Number(group.ownerId);
+                
+                console.log('Owner check:', {
+                    currentUserId: currentUser.id,
+                    groupOwnerId: group.ownerId,
+                    isOwner: isOwner
+                });
+                
+                const locationInputGroup = document.querySelector('.location-input-group');
+                
+                if (locationInputGroup) {
+                    if (isOwner) {
+                        locationInputGroup.style.display = 'flex';
+                        console.log('✅ User IS owner - showing location controls');
+                    } else {
+                        locationInputGroup.style.display = 'none';
+                        console.log('❌ User is NOT owner - hiding location controls');
+                    }
+                }
+                
+                generateAvailabilityGrid();
+                loadAvailability(groupId);
+                loadMeetingLocation();
+            }
+        })
+        .catch(error => {
+            console.error('View group error:', error);
+            alert('Failed to load group details');
+        });
 }
 
 function openCreateGroupModal() {
