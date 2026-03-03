@@ -1014,6 +1014,58 @@ body {
     box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
 }
 
+.meetings-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.meetings-section h3 {
+    color: #4F46E5;
+    margin-bottom: 1rem;
+}
+
+.meeting-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+}
+
+.meeting-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+}
+
+.meeting-card p {
+    margin: 0.25rem 0;
+    opacity: 0.95;
+}
+
+.meeting-card .meeting-date {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.btn-delete-meeting {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-delete-meeting:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
 .btn-schedule-meeting:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
