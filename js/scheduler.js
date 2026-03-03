@@ -569,6 +569,7 @@ function loadMeetingLocation() {
 }
 
 function saveMeetingLocation() {
+  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     const location = document.getElementById('meetingLocation').value.trim();
     
     if (!location) {
