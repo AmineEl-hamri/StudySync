@@ -160,6 +160,9 @@ function loadGroups() {
 
 
 function viewGroup(groupId) {
+
+  console.log(' viewGroup called with groupId:', groupId);
+  
     currentGroupId = groupId;    
 
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -169,6 +172,8 @@ function viewGroup(groupId) {
         openLoginModal();
         return;
     }
+
+  console.log('📡 About to fetch groups for user:', currentUser.id);
     
     fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
         .then(response => response.json())
