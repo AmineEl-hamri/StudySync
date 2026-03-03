@@ -32,7 +32,7 @@ function viewGroup(groupId) {
               document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
               document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
 
-            const isOwner = group.ownerID === currentUser.id;
+            const isOwner = group.ownerId === currentUser.id;
             const locationSection = document.querySelector('.location-section');
             const locationInput = document.getElementById('meetingLocation');
             const locationButton = locationSection.querySelector('button');
