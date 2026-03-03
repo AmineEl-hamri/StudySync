@@ -177,7 +177,7 @@ function viewGroup(groupId) {
     }
 
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const isOwner = currentUser && currentUser.id === group.owner_id;
+    const isOwner = currentUser && currentUser.id === group.ownerId;
 
     const locationInputGroup = document.querySelector('.location-input-group');
     if (locationInputGroup) {
