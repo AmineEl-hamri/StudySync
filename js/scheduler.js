@@ -287,6 +287,10 @@ function displayScheduleResults(optimalTimes) {
         
         html += '</div>';
         html += travelInfoHtml;
+
+       html += '<div style="margin-top: 15px;">';
+        html += '<button class="btn-schedule-meeting" onclick="scheduleMeeting(\'' + option.day + '\', \'' + option.time + '\')">📅 Schedule This Meeting</button>';
+        html += '</div>';
         html += '</div>';
     });
 
