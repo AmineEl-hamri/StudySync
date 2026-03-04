@@ -16,6 +16,7 @@
                   <div class="navigation-links">
                   <a onclick="showHome()">Home</a>
                   <a onclick="showDashboard()" style="display: none;" id="dashboardLink">Dashboard</a>
+                    <a onclick="showMyMeetings()" style="display: none;" id="meetingsLink">My Meetings</a>
                   <a href="#about">About</a>
                   <a href="#contact">Contact</a>
                        <button onclick="openLocationSettings()" class="settings-btn" style="display: none;" id="locationSettingsBtn">
@@ -67,7 +68,24 @@
           </div>
      </div>
 </section>
-
+     <section id="myMeetings" class="my-meetings-page">
+         <div class="container">
+             <div class="page-header">
+                 <h1>📅 My Meetings</h1>
+                 <p>All your upcoming study sessions</p>
+             </div>
+     
+             <div class="meetings-filter">
+                 <button class="filter-btn active" onclick="filterMeetings('all')">All Meetings</button>
+                 <button class="filter-btn" onclick="filterMeetings('upcoming')">Upcoming</button>
+                 <button class="filter-btn" onclick="filterMeetings('past')">Past</button>
+             </div>
+     
+             <div class="meetings-grid" id="allMeetingsGrid">
+                 <p style="text-align: center; color: #666; padding: 3rem;">Loading meetings...</p>
+             </div>
+         </div>
+     </section>
      <section id="groupDetails" class="group-details">
           <div class="container">
                <button class="btn-back" onclick="backToDashboard()"> Back to Dashboard</button>
@@ -116,12 +134,6 @@
                     <h3>Availability Status</h3>
                     <div id="availabilityStatus">
                     </div>
-               </div>
-               <div class="meetings-section">
-                   <h3>📅 Scheduled Meetings</h3>
-                   <div id="scheduledMeetings">
-                       <p style="color: #666;">No meetings scheduled yet.</p>
-                   </div>
                </div>
 
                <div class="schedule-section">
