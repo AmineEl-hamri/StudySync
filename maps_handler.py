@@ -1,25 +1,26 @@
 import requests
+import os
 
-GOOGLE_MAPS_API_KEY = 'AIzaSyBjzQn9y7Anz_6NsSb7X9ptS5aiHQd6-y8'
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
 def calculate_travel_time(origin, destination, mode='driving'):
     """
     Calculate travel time using Google Maps Distance Matrix API
-    
-    Args:
+
+    Arguments:
         origin: Starting address (string)
         destination: Meeting location (string)
         mode: 'driving', 'transit', 'walking', 'bicycling'
-    
+
     Returns:
-        dict with duration_minutes and distance_km
+        dict with duration_minutes, distance_km, duration_text, distance_text
     """
     url = 'https://maps.googleapis.com/maps/api/distancematrix/json'
     params = {
         'origins': origin,
         'destinations': destination,
         'mode': mode,
-        'departure_time': 'now',  # For real-time traffic
+        'departure_time': 'now',
         'key': GOOGLE_MAPS_API_KEY
     }
     
@@ -30,7 +31,6 @@ def calculate_travel_time(origin, destination, mode='driving'):
         element = data['rows'][0]['elements'][0]
         
         if element['status'] == 'OK':
-            # Get duration in traffic if available (for driving)
             if 'duration_in_traffic' in element:
                 duration_seconds = element['duration_in_traffic']['value']
             else:
