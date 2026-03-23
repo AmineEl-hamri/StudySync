@@ -38,11 +38,11 @@ CORS(app, resources={
 
 # Database config
 DB_CONFIG = {
-    'host':     os.environ.get('DB_HOST', 'localhost'),
-    'database': os.environ.get('DB_NAME', 'StudySync'),
-    'user':     os.environ.get('DB_USER', 'postgres'),
-    'password': os.environ.get('DB_PASSWORD', '')
-    }
+    'host':     os.environ['DB_HOST'],     
+    'database': os.environ['DB_NAME'],      
+    'user':     os.environ['DB_USER'],      
+    'password': os.environ['DB_PASSWORD'],  
+}
 
 # Email config
 EMAIL_HOST     = 'smtp.gmail.com'
