@@ -1,5 +1,5 @@
 
-const API_URL = 'http://localhost:5000';
+const API_URL = 'study-sync-api-195370304491.europe-west2.run.app](https://study-sync-api-195370304491.europe-west2.run.app)';
 
 window.onload = function() {
           checkLoginStatus();
