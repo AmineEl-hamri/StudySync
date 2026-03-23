@@ -29,7 +29,7 @@ CORS(app, resources={
             "http://localhost:5000",
             "http://127.0.0.1:5000",
             "https://amineel-hamri.github.io",
-            "study-sync-api-195370304491.europe-west2.run.app(https://study-sync-api-195370304491.europe-west2.run.app)"
+            "https://study-sync-api-195370304491.europe-west2.run.app"
             ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
