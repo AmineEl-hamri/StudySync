@@ -23,17 +23,7 @@ CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 app = Flask(__name__)
-CORS(app, resources={
-    r"/api/*": {
-        "origins": [
-            "http://localhost:5000",
-            "http://127.0.0.1:5000",
-            "https://amineel-hamri.github.io",
-        ],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-    }
-})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Database config
 DB_CONFIG = {
