@@ -97,11 +97,17 @@ function updateProfile() {
 }
 
 function changePassword() {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     const current = document.getElementById('currentPassword').value;
     const newPass = document.getElementById('newPassword').value;
     const confirm = document.getElementById('confirmPassword').value;
     const successEl = document.getElementById('passwordSuccess');
     const errorEl = document.getElementById('passwordError');
+
+    if (!currentUser) {
+        openLoginModal();
+        return;
+    }
 
     if (!current || !newPass || !confirm) {
         errorEl.textContent = 'Please fill in all password fields.';
