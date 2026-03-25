@@ -1,5 +1,5 @@
 
-const API_URL = 'https://study-sync-api-195370304491.europe-west2.run.app';
+const API_URL = 'https://studysync-backend-195370304491.europe-west2.run.app';
 
 window.onload = function() {
           checkLoginStatus();
@@ -96,9 +96,10 @@ function login(event) {
                location.reload();
           }
           function showUserMenu(userName) {
-               document.getElementById('authButtons').style.display = 'none';
-               document.getElementById('userMenu').style.display = 'block';
-               document.getElementById('userName').textContent = userName;
+                    
+                    document.getElementById('authButtons').style.display = 'none';
+                    document.getElementById('userMenu').style.display = 'block';
+                    document.getElementById('userName').textContent = userName;
                     document.getElementById('dashboardLink').style.display = 'block';
                     document.getElementById('meetingsLink').style.display = 'block';
                     document.getElementById('locationSettingsBtn').style.display = 'block';
