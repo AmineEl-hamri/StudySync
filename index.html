@@ -51,7 +51,7 @@
             </div>
       </div>
 </section>
-<section id="dashboard" class="dashboard">
+<section id="dashboard" class="dashboard" style="display:none;">
      <div class="container">
           <div class="dashboard-header">
                <h1>Welcome back, <span id="dashboardUserName"></span>! </h1>
@@ -68,7 +68,7 @@
           </div>
      </div>
 </section>
-     <section id="myMeetings" class="my-meetings-page">
+     <section id="myMeetings" class="my-meetings-page" style="display:none;">
          <div class="container">
              <div class="page-header">
                  <h1>📅 My Meetings</h1>
@@ -86,7 +86,7 @@
              </div>
          </div>
      </section>
-     <section id="groupDetails" class="group-details">
+     <section id="groupDetails" class="group-details" style="display:none;">
           <div class="container">
                <button class="btn-back" onclick="backToDashboard()"> Back to Dashboard</button>
                <div class="group-info">
@@ -144,6 +144,12 @@
                     <h2> Recommended Meeting Times</h2>
                     <div id="recommendedTimes">
                     </div>
+               </div>
+               
+               <div class="scheduled-meetings-section">
+                        <h2>📅 Scheduled Meetings</h2>
+                        <div id="scheduledMeetings">
+                        </div>
                </div>
           </div>
      </section>
