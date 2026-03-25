@@ -153,6 +153,186 @@
                </div>
           </div>
      </section>
+     
+     <section id="about" style="display:none; padding: 3rem 0; min-height: 70vh;">
+         <div class="container">
+             <div class="page-header">
+                 <h1>About StudySync</h1>
+                 <p>Helping students schedule smarter, together.</p>
+             </div>
+             <div class="about-grid">
+                 <div class="about-card">
+                     <div class="about-icon">🎯</div>
+                     <h3>Our Mission</h3>
+                     <p>StudySync was built to solve a problem every student faces — finding a time that works for everyone. No more endless group chats trying to coordinate schedules.</p>
+                 </div>
+                 <div class="about-card">
+                     <div class="about-icon">🧠</div>
+                     <h3>Smart Scheduling</h3>
+                     <p>Our CSP-based algorithm analyses everyone's availability and finds the optimal meeting times, taking into account travel times and member locations.</p>
+                 </div>
+                 <div class="about-card">
+                     <div class="about-icon">📅</div>
+                     <h3>Calendar Integration</h3>
+                     <p>Connect your Google Calendar and let StudySync automatically import your availability — no manual input needed.</p>
+                 </div>
+                 <div class="about-card">
+                     <div class="about-icon">📍</div>
+                     <h3>Travel Aware</h3>
+                     <p>StudySync calculates real travel times for each member so everyone knows when to leave and can plan their journey in advance.</p>
+                 </div>
+             </div>
+             <div class="about-story">
+                 <h2>The Story</h2>
+                 <p>StudySync started as a final year Computer Science project, born out of frustration with the chaos of organising group study sessions. What began as a simple scheduling tool grew into a full-stack platform with smart algorithms, calendar sync, and real-time travel calculations.</p>
+                 <p style="margin-top: 1rem;">Built with Flask, PostgreSQL, and a JavaScript frontend, StudySync is designed to be fast, intuitive, and genuinely useful for students.</p>
+             </div>
+         </div>
+     </section>
+     
+     <section id="contact" style="display:none; padding: 3rem 0; min-height: 70vh;">
+         <div class="container">
+             <div class="page-header">
+                 <h1>Contact Us</h1>
+                 <p>Got a question or feedback? We'd love to hear from you.</p>
+             </div>
+             <div class="contact-grid">
+                 <div class="contact-form-section">
+                     <div class="groups-section">
+                         <h2>Send a Message</h2>
+                         <form onsubmit="submitContactForm(event)">
+                             <div class="form-group">
+                                 <label>Your Name</label>
+                                 <input type="text" id="contactName" placeholder="John Smith" required>
+                             </div>
+                             <div class="form-group">
+                                 <label>Email Address</label>
+                                 <input type="email" id="contactEmail" placeholder="john@email.com" required>
+                             </div>
+                             <div class="form-group">
+                                 <label>Subject</label>
+                                 <input type="text" id="contactSubject" placeholder="What is this about?">
+                             </div>
+                             <div class="form-group">
+                                 <label>Message</label>
+                                 <textarea id="contactMessage" rows="5" placeholder="Your message here..." style="width:100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; font-family: inherit; resize: vertical;" required></textarea>
+                             </div>
+                             <div id="contactSuccess" class="success-message"></div>
+                             <div id="contactError" class="error-message"></div>
+                             <button type="submit" class="btn-submit">Send Message</button>
+                         </form>
+                     </div>
+                 </div>
+                 <div class="contact-info-section">
+                     <div class="groups-section" style="margin-bottom: 1.5rem;">
+                         <h2>Get In Touch</h2>
+                         <div class="contact-detail">
+                             <span class="contact-icon">📧</span>
+                             <div>
+                                 <strong>Email</strong>
+                                 <p>elhamriamine2003@gmail.com</p>
+                             </div>
+                         </div>
+                         <div class="contact-detail">
+                             <span class="contact-icon">🌐</span>
+                             <div>
+                                 <strong>Website</strong>
+                                 <p>amineel-hamri.github.io/StudySync</p>
+                             </div>
+                         </div>
+                         <div class="contact-social">
+                             <h3>Follow Us</h3>
+                             <div class="social-links">
+                                 <a href="https://github.com/amineel-hamri" target="_blank" class="social-btn">GitHub</a>
+                                 <a href="https://linkedin.com/in/amine-el-hamri" target="_blank" class="social-btn social-btn-linkedin">LinkedIn</a>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="groups-section">
+                         <h2>FAQ</h2>
+                         <div class="faq-item">
+                             <div class="faq-question" onclick="toggleFaq(this)">
+                                 Is StudySync free to use? <span class="faq-arrow">▼</span>
+                             </div>
+                             <div class="faq-answer">Yes! StudySync is completely free for all students.</div>
+                         </div>
+                         <div class="faq-item">
+                             <div class="faq-question" onclick="toggleFaq(this)">
+                                 How does the scheduling algorithm work? <span class="faq-arrow">▼</span>
+                             </div>
+                             <div class="faq-answer">We use a Constraint Satisfaction Problem (CSP) algorithm that finds time slots where the maximum number of members are available, factoring in travel time buffers.</div>
+                         </div>
+                         <div class="faq-item">
+                             <div class="faq-question" onclick="toggleFaq(this)">
+                                 Is my Google Calendar data safe? <span class="faq-arrow">▼</span>
+                             </div>
+                             <div class="faq-answer">Yes. We only read your busy/free times and never store or share your calendar event details.</div>
+                         </div>
+                         <div class="faq-item">
+                             <div class="faq-question" onclick="toggleFaq(this)">
+                                 How many members can a group have? <span class="faq-arrow">▼</span>
+                             </div>
+                             <div class="faq-answer">There's no hard limit — StudySync works best with groups of 2 to 10 members.</div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </section>
+
+     <section id="profile" style="display:none; padding: 3rem 0; min-height: 70vh;">
+         <div class="container">
+             <div class="page-header">
+                 <h1>My Profile</h1>
+                 <p>Manage your personal settings and security.</p>
+             </div>
+             <div class="profile-grid">
+                 <div class="profile-avatar-section groups-section">
+                     <div class="avatar-circle" id="profileAvatar">A</div>
+                     <h2 id="profileDisplayName">Amine</h2>
+                     <p id="profileDisplayEmail" style="color:#666;">email@email.com</p>
+                     <label class="avatar-upload-btn">
+                         📷 Change Photo
+                         <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="previewAvatar(event)">
+                     </label>
+                 </div>
+                 <div class="profile-details-section">
+                     <div class="groups-section" style="margin-bottom: 1.5rem;">
+                         <h2>Personal Information</h2>
+                         <div class="form-group">
+                             <label>Full Name</label>
+                             <input type="text" id="profileName" placeholder="Your name">
+                         </div>
+                         <div class="form-group">
+                             <label>Email Address</label>
+                             <input type="email" id="profileEmail" placeholder="Your email">
+                         </div>
+                         <div id="profileUpdateSuccess" class="success-message"></div>
+                         <div id="profileUpdateError" class="error-message"></div>
+                         <button class="btn-submit" onclick="updateProfile()">Save Changes</button>
+                     </div>
+                     <div class="groups-section">
+                         <h2>Change Password</h2>
+                         <div class="form-group">
+                             <label>Current Password</label>
+                             <input type="password" id="currentPassword" placeholder="........">
+                         </div>
+                         <div class="form-group">
+                             <label>New Password</label>
+                             <input type="password" id="newPassword" placeholder="Minimum 8 characters">
+                         </div>
+                         <div class="form-group">
+                             <label>Confirm New Password</label>
+                             <input type="password" id="confirmPassword" placeholder="Repeat new password">
+                         </div>
+                         <div id="passwordSuccess" class="success-message"></div>
+                         <div id="passwordError" class="error-message"></div>
+                         <button class="btn-submit" onclick="changePassword()">Update Password</button>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </section>
      <div class ="modal" id="loginModal">
           <div class="modal-content">
                <span class="close-modal" onclick="closeLoginModal()">&times;</span>
