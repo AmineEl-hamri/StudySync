@@ -39,11 +39,24 @@ function showProfile() {
     }
     hideAllSections();
     document.getElementById('profile').style.display = 'block';
-    document.getElementById('profileName').value = currentUser.name || '';
-    document.getElementById('profileEmail').value = currentUser.email || '';
-    document.getElementById('profileDisplayName').textContent = currentUser.name || 'User';
-    document.getElementById('profileDisplayEmail').textContent = currentUser.email || '';
-    document.getElementById('profileAvatar').textContent = (currentUser.name || 'U')[0].toUpperCase();
+
+    fetch(`${API_URL}/api/users/${currentUser.id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const user = data.user;
+                document.getElementById('profileName').value = user.name || '';
+                document.getElementById('profileEmail').value = user.email || '';
+                document.getElementById('profileDisplayName').textContent = user.name || 'User';
+                document.getElementById('profileDisplayEmail').textContent = user.email || '';
+                const avatar = document.getElementById('profileAvatar');
+                if (user.profile_picture) {
+                    avatar.innerHTML = `<img src="${user.profile_picture}" alt="Avatar">`;
+                } else {
+                    avatar.textContent = (user.name || 'U')[0].toUpperCase();
+                }
+            }
+        });
 }
 
 function updateProfile() {
@@ -57,20 +70,30 @@ function updateProfile() {
         return;
     }
 
-    const currentUser = JSON.parse(localstorage.getItem('currentUser'));
-    currentUser.name = name;
-    currentUser.email = email;
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    // change soon to update database instead of local storage
-
-    document.getElementById('profileDisplayName').textContent = name;
-    document.getElementById('profileDisplayEmail').textContent = email;
-    document.getElementById('profileAvatar').textContent = name[0].toUpperCase();
-    document.getElementById('userName').textContent = name;
-
-    successEl.textContent = '✅ Profile updated successfully!';
-    errorEl.textContent = '';
-    seetTimeout(() => successEl.textContent = '', 3000);
+    fetch(`${API_URL}/api/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            // update localStorage
+            currentUser.name = data.user.name;
+            currentUser.email = data.user.email;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            document.getElementById('profileDisplayName').textContent = data.user.name;
+            document.getElementById('profileDisplayEmail').textContent = data.user.email;
+            document.getElementById('profileAvatar').textContent = data.user.name[0].toUpperCase();
+            document.getElementById('userName').textContent = data.user.name;
+            successEl.textContent = '✅ Profile updated successfully!';
+            errorEl.textContent = '';
+            setTimeout(() => successEl.textContent = '', 3000);
+        } else {
+            errorEl.textContent = data.error || 'Update failed';
+        }
+    })
+    .catch(() => errorEl.textContent = 'Network error. Please try again.');
 }
 
 function changePassword() {
@@ -93,13 +116,25 @@ function changePassword() {
         return;
     }
 
-    // change this to update backend after it works
-    successEl.textContent = '✅ Password updated successfully!';
-    errorEl.textContent = '';
-    document.getElementById('currentPassword').value = '';
-    document.getElementById('newPassword').value = '';
-    document.getElementById('confirmPassword').value = '';
-    setTimeout(() => successEl.textContent = '', 3000);
+    fetch(`${API_URL}/api/users/${currentUser.id}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: current, new_password: newPass })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            successEl.textContent = '✅ Password updated successfully!';
+            errorEl.textContent = '';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            setTimeout(() => successEl.textContent = '', 3000);
+        } else {
+            errorEl.textContent = data.error || 'Failed to update password';
+        }
+    })
+    .catch(() => errorEl.textContent = 'Network error. Please try again.');
 }
 
 function previewAvatar(event) {
@@ -109,8 +144,31 @@ function previewAvatar(event) {
     reader.onload = function(e) {
         const avatar = document.getElementById('profileAvatar');
         avatar.innerHTML = `<img src="${e.target.result}" alt="Avatar">`;
+
+        uploadProfilePicture(e.target.result, file.type);
     };
     reader.readAsDataURL(file);
+}
+
+function uploadProfilePicture(base64Data, contentType) {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    fetch(`${API_URL}/api/users/${currentUser.id}/picture`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: base64Data, content_type: contentType })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            currentUser.profile_picture = data.picture_url;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            document.getElementById('profileUpdateSuccess').textContent = '✅ Profile picture updated!';
+            setTimeout(() => document.getElementById('profileUpdateSuccess').textContent = '', 3000);
+        } else {
+            alert('Failed to upload picture: ' + data.error);
+        }
+    })
+    .catch(() => alert('Network error uploading picture.'));
 }
 
 function submitContactForm(event) {
