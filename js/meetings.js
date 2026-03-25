@@ -1,13 +1,14 @@
 let currentMeetingsFilter = 'all';
 
 function showMyMeetings() {
-    // Hide other sections
-    document.getElementById('home').classList.remove('active');
-    document.getElementById('dashboard').classList.remove('active');
-    document.getElementById('groupDetails').classList.remove('active');
-    
-    // show my meetings
-    document.getElementById('myMeetings').classList.add('active');
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+        openLoginModal();
+        return;
+    }
+
+    hideAllSections();
+    document.getElementById('myMeetings').style.display = 'block';
     
     // load all meetings
     loadAllMeetings();
