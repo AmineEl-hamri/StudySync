@@ -51,6 +51,13 @@ body {
             color: #4F46E5;
       }
 
+      nav .navigation-links {
+            white-space: nowrap;
+      }
+
+      nav .navigation-links a {
+            white-space: nowrap;
+      }
       .auth-buttons {
             display: flex;
             gap: 1rem;
