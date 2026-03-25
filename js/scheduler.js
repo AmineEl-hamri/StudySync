@@ -25,8 +25,8 @@ function viewGroup(groupId) {
                   return;
               }
                 
-              document.getElementById('dashboard').classList.remove('active');
-              document.getElementById('groupDetails').classList.add('active');
+              hideAllSections();
+              document.getElementById('groupDetails').style.display = 'block';
                 
               document.getElementById('groupDetailsName').textContent = group.name;
               document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
@@ -61,8 +61,8 @@ function viewGroup(groupId) {
 }
 
 function backToDashboard() {
-  document.getElementById('groupDetails').classList.remove('active');
-  document.getElementById('dashboard').classList.add('active');
+  hideAllSections();
+  document.getElementById('dashboard').style.display = 'block';
   selectedSlots.clear();
 }
 
