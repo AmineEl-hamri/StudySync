@@ -57,6 +57,8 @@ function showProfile() {
                 }
             }
         });
+
+    loadPreferences();
 }
 
 function updateProfile() {
