@@ -1405,3 +1405,164 @@ body {
             transition: background 0.3s;
 }
 .avatar-upload-btn:hover { background: #e0e7ff; color: #4F46E5; }
+
+/* Mobile CSS styling */
+
+@media (max-width: 768px) {
+            nav .container {
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        padding: 0.75rem 1rem;
+            }
+            .logo {
+                        font-size: 1.2rem;
+            }
+            .navigation-links {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 0.5rem 1rem;
+                        font-size: 0.85rem;
+                        width: 100%;
+            }
+
+            .navigation-links a {
+                        white-space: nowrap;
+            }
+
+            .settings-btn {
+                        font-size: 0.8rem;
+                        padding: 6px 10px;
+            }
+
+            user-name {
+                        font-size: 0.85rem;
+                        padding: 0.4rem 0.75rem;
+            }
+
+            .hero {
+                        padding: 3rem 1rem;
+                        width: 100%;
+            }
+            .hero h1 {
+                        font-size: 2rem;
+            }
+
+            .cta-buttons {
+                        felx-direction: column;
+                        align-items: center;
+            }
+
+            .dashboard,
+            .group-details,
+            .my-meeitngs-page,
+            #about,
+            #contact,
+            #profile {
+                        padding: 1.5rem 0;
+                        width: 100%;
+            }
+
+            .groups-grid {
+                        grid-template-columns: 1fr;
+            }
+
+            .meetings-grid {
+                        grid-template-columns: 1fr;
+            }
+
+            .meetings-filter {
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+            }
+
+            .filter-ntm {
+                        padding: 0.5rem 1rem;
+                        font-size: 0.9rem;
+            }
+
+            .availability-grid {
+                        overflow-x: auto;
+                        -webkit-overflow-scrolling: touch;
+            }
+
+            .availability-actions {
+                        flex-direction: column;
+            }
+
+            .availability-actions button {
+                        width: 100%;
+            }
+
+            .location-input-group button {
+                        width: 100%;
+            }
+
+            .about-grid { 
+                        grid-template-colums: 1fr;
+            }
+
+            .contact-grid {
+                        grid-template-columns: 1fr;
+            }
+            .profile-grid {
+                        grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                        padding: 1.5rem;
+                        width: 95%;
+                        margin: 1rem auto;
+            }
+            .time-option {
+                        padding: 1rem;
+            }
+
+            .timeline-row {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 4px;
+            }
+
+            .timeline-arrow {
+                        transform: rotate(90deg);
+            }
+
+            .timeline-step {
+                        width: 100%;
+            }
+
+            .btn-primary, .btn-secondary, .btn-create {
+                        width: 100%;
+                        text-align: center;
+            }
+
+            .dashboard-header h1 {
+                        font-size: 1.5rem;
+            }
+
+            .page-header h1 {
+                        font-size: 1.5rem;
+            }
+}
+
+/* medium size screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+            .groups-grid {
+                        grid-template-columns: repeat(2, 1fr);
+            }
+            .meetings-grid {
+                        grid-template-columns: repeat(2, 1fr);
+            }
+            .about-grid {
+                        grid-template-columns: repeat(2, 1fr);
+            }
+            .navigation-links {
+                        gap: 1rem;
+                        font-size: 0.9rem;
+            }
+
+
+}
+
+
+
