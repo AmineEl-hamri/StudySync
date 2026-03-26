@@ -9,6 +9,13 @@ function checkLoginStatus() {
                if (currentUser) {
                     const user = JSON.parse(currentUser);
                     showUserMenu(user.name);
+                    fetch(`${API_URL}/api/users/${user.id}`)
+                         .then(r => r.json())
+                         .then(data => {         
+                              if (data.success && !data.user.tutorial_complete) {
+                                   startTutorial();
+                              }
+                         });
                }
 }
 
@@ -43,7 +50,7 @@ function register(event) {
                                         closeRegisterModal();
                                         showUserMenu(data.user.name);
                                         showDashboard();
-                                        if (shouldShowTutorial()) startTutorial();
+                                        startTutorial();
                               }, 1500);
                     } else {
                               errorDiv.textContent = data.error || 'Registration failed';
