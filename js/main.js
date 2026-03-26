@@ -246,3 +246,11 @@ function showMyMeetings() {
     document.getElementById('myMeetings').style.display = 'block';
     loadAllUserMeetings();
 }
+
+function toggleMobileMenu() {
+    document.getElementById('navLinks').classList.toggle('open');
+}
+
+function closeMobileMenu() {
+    document.getElementById('navLinks').classList.remove('open');
+}
