@@ -330,6 +330,111 @@
                          <div id="passwordError" class="error-message"></div>
                          <button class="btn-submit" onclick="changePassword()">Update Password</button>
                      </div>
+                      <div class="groups-section" style="margin-top: 1.5rem;">
+                           <h2>⏰ Availability Preferences</h2>
+                           <p style="color:#666; margin-bottom: 1.5rem; font-size:0.95rem;">
+                                Set your personal schedule constraints. These will be offered as a template when you join a new group.
+                           </p>
+                           <div class="pref-block">
+                                <div class="pref-block-header">
+                                     <span>🎓 Work / Uni Hours</span>
+                                     <label class="pref-toggle">
+                                          <input type="checkbox" id="prefWorkEnabled" onchange="togglePregBlock('work')">
+                                          <span class="pref-toggle-slider"></span>
+                                     </label>
+                                </div>
+                                <div class="pref-block-body" id="prefWorkBody" style="display:none;">
+                                     <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">Block out your working or university hours so you're never marked available during them. </p>
+                                     <div class="pref-days">
+                                          <label><input type="checkbox" class="work-day" value="0"> Mon</label>
+                                          <label><input type="checkbox" class="work-day" value="1"> Tue</label>
+                                          <label><input type="checkbox" class="work-day" value="2"> Wed</label>
+                                          <label><input type="checkbox" class="work-day" value="3"> Thu</label>
+                                          <label><input type="checkbox" class="work-day" value="4"> Fri</label>
+                                          <label><input type="checkbox" class="work-day" value="5"> Sat</label>
+                                          <label><input type="checkbox" class="work-day" value="6"> Sun</label>
+                                      </div>
+                                     <div class="pref-time-now">
+                                          <div class="pref-time-group">
+                                               <label>From</label>
+                                               <select id="prefWorkStart" class="pref-select">
+                                                    <option>09:00</option><option>10:00</option><option>11:00</option>
+                                                    <option>12:00</option><option>13:00</option><option>14:00</option>
+                                                    <option>15:00</option><option>16:00</option><option>17:00</option>
+                                               </select>
+                                          </div>
+                                          <div class="pref-time-group">
+                                               <label>To</label>
+                                               <select id="prefWorkEnd" class="pref-select">
+                                                    <option>13:00</option><option>14:00</option><option>15:00</option>
+                                                    <option>16:00</option><option selected>17:00</option><option>18:00</option>
+                                                    <option>19:00</option><option>20:00</option><option>21:00</option>
+                                               </select>
+                                          </div>
+                                     </div>
+                                </div>
+                           </div>
+                           <div class="pref-block">
+                                <div class="pref-block-header">
+                                     <span>🧘 Personal Time</span>
+                                     <label class="pref-toggle">
+                                          <input type="checkbox" id="prefFocusEnabled" onchange="togglePrefBlock('focus')">
+                                          <span class="pref-toggle-slider"></span>
+                                     </label>
+                                </div>
+                                <div class="pref-block-body" id="prefFocusBody" style="display:none;">
+                                     <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">Reserve this time for yourself: studying alone, gym, hobbies, or anything you don't want interrupted.</p>
+                                     <div class="pref-days">
+                                          <label><input type="checkbox" class="focus-day" value="0"> Mon</label>
+                                          <label><input type="checkbox" class="focus-day" value="1"> Tue</label>
+                                          <label><input type="checkbox" class="focus-day" value="2"> Wed</label>
+                                          <label><input type="checkbox" class="focus-day" value="3"> Thu</label>
+                                          <label><input type="checkbox" class="focus-day" value="4"> Fri</label>
+                                          <label><input type="checkbox" class="focus-day" value="5"> Sat</label>
+                                          <label><input type="checkbox" class="focus-day" value="6"> Sun</label>
+                                      </div>
+                                     <div class="pref-time-row">
+                                          <div class="pref-time-group">
+                                               <label>From</label>
+                                               <select id="prefFocusStart" class="pref-select">
+                                                    <option>09:00</option><option>10:00</option><option>11:00</option>
+                                                    <option>12:00</option><option>13:00</option><option>14:00</option>
+                                                    <option>15:00</option><option>16:00</option><option>17:00</option>
+                                                    <option>18:00</option><option>19:00</option><option>20:00</option>
+                                               </select>
+                                          </div>
+                                          <div class="pref-time-group">
+                                               <label>To</label>
+                                               <select id="prefFocusEnd" class="pref-select">
+                                                    <option>10:00</option><option>11:00</option><option>12:00</option>
+                                                    <option>13:00</option><option>14:00</option><option>15:00</option>
+                                                    <option>16:00</option><option>17:00</option><option>18:00</option>
+                                                    <option selected>19:00</option><option>20:00</option><option>21:00</option>
+                                                </select>
+                                          </div>
+                                     </div>
+                                </div>
+                           </div>
+                           <div class="pref-block">
+                                <div class="pref-block-header">
+                                     <span>🚫 Custom Blocked Periods</span>
+                                     <label class="pref-toggle">
+                                          <input type="checkbox" id="prefCustomEnabled" onchange="togglePrefBlock('custom')">
+                                          <span class="pref-toggle-slider"></span>
+                                     </label>
+                                </div>
+                                <div class="pref-block-body" id="prefCustomBody" style="display:none;">
+                                     <p style="color:#666; font-szie:0.85rem; margin-bottom:1rem;">Add any other recurring time blocks you want kept free.</p>
+                                     <div id="customBlocksList"></div>
+                                     <button type="button" class="btn-add-block" onclick="addCustomBlock()">+ Add Time Block</button>
+                                </div>
+                           </div>
+                           <div id="prefSaveSuccess" class="success-message" style="margin-top:1rem;"></div>
+                           <div id="prefSaveError" class="error-message" style="margin-top:1rem;"></div>
+                           <button class="btn-submit" style="margin-top:1.5rem;" onclick="savePreferences()">
+                                💾 Save Preferences
+                           </button>
+                      </div>                        
                  </div>
              </div>
          </div>
@@ -471,6 +576,17 @@
                      <button id="tutorialBack" onclick="tutorialBack()">← Back</button>
                      <button id="tutorialNext" onclick="tutorialNext()"></button>
                  </div>
+             </div>
+         </div>
+     </div>
+     <div class="modal" id="applyPreferencesModal">
+         <div class="modal-content">
+             <h2>⏰ Apply Your Preferences?</h2>
+             <p class="modal-subtitle">You have availability preferences saved. Would you like to automatically block those times for this group?</p>
+             <div id="prefPreviewList" style="margin: 1rem 0; background:#f9fafb; padding:1rem; border-radius:8px; font-size:0.9rem; color:#4B5563;"></div>
+             <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+                 <button class="btn-secondary" style="flex:1;" onclick="closeApplyPreferencesModal()">No Thanks</button>
+                 <button class="btn-submit" style="flex:1;" onclick="applyPreferencesToGroup()">Apply Preferences</button>
              </div>
          </div>
      </div>
