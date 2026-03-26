@@ -179,13 +179,33 @@ function uploadProfilePicture(base64Data, contentType) {
 
 function submitContactForm(event) {
     event.preventDefault();
-    document.getElementById('contactSuccess').textContent = '✅ Message sent! We\'ll get back to you soon.';
-    document.getElementById('contactError').textContent = '';
-    document.getElementById('contactName').value = '';
-    document.getElementById('contactEmail').value = '';
-    document.getElementById('contactSubject').value = '';
-    document.getElementById('contactMessage').value = '';
-    setTimeout(() => document.getElementById('contactSuccess').textContent = '', 4000);
+    const name = document.getElementById('contactName').value.trim();
+    const email = document.getElementById('contactEmail').value.trim();
+    const subject = document.getElementById('contactSubject').value.trim();
+    const message = document.getElementById('contactMessage').value.trim();
+    const successEl = document.getElementById('contactSuccess');
+    const errorEl = document.getElementById('contactError');
+
+    fetch(`${API_URL}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject, message })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            successEl.textContent = '✅ Message sent! We\'ll get back to you soon.';
+            errorEl.textContent = '';
+            document.getElementById('contactName').value = '';
+            document.getElementById('contactEmail').value = '';
+            document.getElementById('contactSubject').value = '';
+            document.getElementById('contactMessage').value = '';
+            setTimeout(() => successEl.textContent = '', 4000);
+        } else {
+            errorEl.textContent = data.error || 'Failed to send message.';
+        }
+    })
+    .catch(() => errorEl.textContent = 'Network error. Please try again.');
 }
 
 function toggleFaq(element) {
