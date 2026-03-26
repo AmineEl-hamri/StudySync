@@ -43,6 +43,7 @@ function register(event) {
                                         closeRegisterModal();
                                         showUserMenu(data.user.name);
                                         showDashboard();
+                                        if (shouldShowTutorial()) startTutorial();
                               }, 1500);
                     } else {
                               errorDiv.textContent = data.error || 'Registration failed';
