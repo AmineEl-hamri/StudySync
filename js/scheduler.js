@@ -52,6 +52,7 @@ function viewGroup(groupId) {
               loadAvailability(groupId);
             loadMeetingLocation();
             loadGroupMeetings();
+            offerToApplyPreferences(groupId);
           }
       })
         .catch(error => {
