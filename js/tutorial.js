@@ -110,6 +110,13 @@ function renderTutorialStep() {
 
 function markTutorialComplete() {
     localStorage.setItem('studysync_tutorial_done', 'true');
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    if (currentUser) {
+        fetch(`${API_URL}/api/users/${currentUser.id}/tutorial`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
 }
 
 function shouldShowTutorial() {
