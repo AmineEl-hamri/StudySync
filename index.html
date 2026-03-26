@@ -13,12 +13,13 @@
                   <div class="logo" onclick="showHome()">
                         <span>StudySync </span>
                   </div>
-                  <div class="navigation-links">
-                  <a onclick="showHome()">Home</a>
-                  <a onclick="showDashboard()" style="display: none;" id="dashboardLink">Dashboard</a>
-                    <a onclick="showMyMeetings()" style="display: none;" id="meetingsLink">My Meetings</a>
-                  <a onclick="showAbout()">About</a>
-                  <a onclick="showContact()">Contact</a>
+                 <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()">☰</button>
+                  <div class="navigation-links" id="navLinks">
+                  <a onclick="showHome(); closeMobileMenu()">Home</a>
+                  <a onclick="showDashboard(); closeMobileMenu()" style="display: none;" id="dashboardLink">Dashboard</a>
+                    <a onclick="showMyMeetings(); closeMobileMenu()" style="display: none;" id="meetingsLink">My Meetings</a>
+                  <a onclick="showAbout(); closeMobileMenu()">About</a>
+                  <a onclick="showContact(); closeMobileMenu()">Contact</a>
                        <button onclick="openLocationSettings()" class="settings-btn" style="display: none;" id="locationSettingsBtn">
                             My Locations
                        </button>
