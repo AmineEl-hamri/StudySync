@@ -20,6 +20,7 @@ function hideAllSections() {
     document.getElementById('about').style.display = 'none';
     document.getElementById('contact').style.display = 'none';
     document.getElementById('profile').style.display = 'none';
+    document.getElementById('privacyPolicy').style.display = 'none';
 }
 
 function showAbout() {
@@ -255,4 +256,33 @@ function toggleMobileMenu() {
 
 function closeMobileMenu() {
     document.getElementById('navLinks').classList.remove('open');
+}
+
+function deleteAccount() {
+    if (!confirm('Are you sure you want to permanently delete your account? All your groups, availability, and meetings will be removed. This cannot be undone.')) return;
+    if (!confirm('This is your final warning — your account will be permanently deleted. Continue?')) return;
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+    fetch(`${API_URL}/api/users/${currentUser.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            localStorage.removeItem('currentUser');
+            alert('Your account has been permanently deleted.');
+            location.reload();
+        } else {
+            alert('Failed to delete account: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(() => alert('Network error. Please try again.'));
+}
+
+function showPrivacyPolicy() {
+    hideAllSections();
+    document.getElementById('privacyPolicy').style.display = 'block';
+    window.scrollTo(0, 0);
 }
