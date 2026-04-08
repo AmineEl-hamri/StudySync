@@ -438,6 +438,13 @@
                  </div>
              </div>
          </div>
+         <div class="groups-section" style="margin-top: 1.5rem; border-left: 4px solid #EF4444;">
+              <h2 style="color: #EF4444;">Danger Zone</h2>
+              <p style="color: #666; margin-bottom: 1rem;">Permanently delete your account and all associated data. This cannot be undone.</p>
+              <button onclick="deleteAccount()" style="background: #EF4444; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem;">
+                  🗑️ Delete My Account
+              </button>
+          </div>
      </section>
      <div class ="modal" id="loginModal">
           <div class="modal-content">
@@ -590,6 +597,65 @@
              </div>
          </div>
      </div>
+     <section id="privacyPolicy" style="display:none; padding: 3rem 0; min-height: 70vh;">
+         <div class="container">
+             <div class="page-header">
+                 <h1>Privacy Policy</h1>
+                 <p>Last updated: April 2026</p>
+             </div>
+             <div class="groups-section">
+                 <h2>1. Who We Are</h2>
+                 <p style="margin-bottom: 1rem;">StudySync is a web-based scheduling application developed as an academic project at the University of Greenwich. The data controller for personal data processed through this service is the project author, Amine El-hamri.</p>
+     
+                 <h2 style="margin-top: 1.5rem;">2. What Data We Collect</h2>
+                 <p style="margin-bottom: 0.5rem;">We collect the following personal data when you use StudySync:</p>
+                 <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: #444;">
+                     <li>Full name and email address (provided at registration)</li>
+                     <li>Password (stored as a bcrypt hash — your plaintext password is never stored)</li>
+                     <li>Profile picture (optional, stored in Google Cloud Storage)</li>
+                     <li>Home and work/university address (optional, used for travel time calculations)</li>
+                     <li>Availability data (time slots you mark as free within study groups)</li>
+                     <li>Google Calendar access tokens (only if you choose to connect your Google Calendar)</li>
+                 </ul>
+     
+                 <h2 style="margin-top: 1.5rem;">3. Why We Collect It</h2>
+                 <p style="margin-bottom: 1rem;">All data collected is used solely to provide the StudySync scheduling service. Email addresses are used for login and meeting notifications. Location data is used only to calculate travel times to meeting venues. Calendar tokens are used only to import your availability when you request it. No data is sold, shared with third parties for marketing, or used for any purpose other than operating the service.</p>
+     
+                 <h2 style="margin-top: 1.5rem;">4. Legal Basis for Processing</h2>
+                 <p style="margin-bottom: 1rem;">Under the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018, our lawful basis for processing your personal data is your consent. By registering for an account, you consent to your data being stored and processed as described in this policy. You may withdraw consent at any time by deleting your account.</p>
+     
+                 <h2 style="margin-top: 1.5rem;">5. Data Retention</h2>
+                 <p style="margin-bottom: 1rem;">Your personal data is retained for as long as your account remains active. If you delete your account, all associated data — including your profile, availability records, group memberships, and meeting history — is permanently removed from our systems within 24 hours. Google Calendar access tokens are deleted immediately upon account deletion. Profile pictures stored in Google Cloud Storage are removed within 7 days of account deletion.</p>
+     
+                 <h2 style="margin-top: 1.5rem;">6. Where Your Data Is Stored</h2>
+                 <p style="margin-bottom: 1rem;">Your data is stored on Google Cloud infrastructure (Cloud SQL and Cloud Storage) hosted in the EU West 2 region (London). Google LLC acts as a data processor under a Data Processing Agreement. Google's participation in the UK-US data bridge framework provides the legal basis for any incidental data transfers.</p>
+     
+                 <h2 style="margin-top: 1.5rem;">7. Your Rights Under UK GDPR</h2>
+                 <p style="margin-bottom: 0.5rem;">You have the following rights regarding your personal data:</p>
+                 <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: #444;">
+                     <li><strong>Right of access</strong> — you can request a copy of your data</li>
+                     <li><strong>Right to rectification</strong> — you can update your name and email in your profile settings</li>
+                     <li><strong>Right to erasure</strong> — you can permanently delete your account and all associated data from your profile page</li>
+                     <li><strong>Right to object</strong> — you can stop using the service at any time</li>
+                     <li><strong>Right to withdraw consent</strong> — deleting your account withdraws all consent</li>
+                 </ul>
+     
+                 <h2 style="margin-top: 1.5rem;">8. Security</h2>
+                 <p style="margin-bottom: 1rem;">All communication between your browser and our servers is encrypted using HTTPS. Passwords are stored as bcrypt hashes and are never accessible in plaintext. Google Calendar access uses OAuth 2.0, meaning we never handle your Google password directly.</p>
+     
+                 <h2 style="margin-top: 1.5rem;">9. Contact</h2>
+                 <p style="margin-bottom: 1rem;">For any privacy-related questions or to exercise your data rights, please contact us via the <a onclick="showContact()" style="color: #4F46E5; cursor: pointer; font-weight: 600;">Contact page</a>.</p>
+             </div>
+         </div>
+     </section>
+     <footer style="background: white; border-top: 1px solid #E5E7EB; padding: 1.5rem 0; margin-top: 2rem; text-align: center;">
+         <div class="container">
+             <p style="color: #9CA3AF; font-size: 0.9rem;">
+                 © 2026 StudySync · University of Greenwich · 
+                 <a onclick="showPrivacyPolicy()" style="color: #4F46E5; cursor: pointer; text-decoration: none; font-weight: 600;">Privacy Policy</a>
+             </p>
+         </div>
+     </footer>
     <script src="js/auth.js"></script>
      <script src="js/groups.js"></script>
      <script src="js/main.js"></script>
