@@ -243,6 +243,37 @@ body {
           width: 90%;
           position: relative;
      }
+.modal-content textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-content textarea:focus {
+    outline: none;
+    border-color: #4F46E5;
+}
+
+.btn-add-member {
+    padding: 0.6rem 1rem;
+    background: #4F46E5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.btn-add-member:hover {
+    background: #4338CA;
+}
      .close-modal {
           position: absolute;
           top: 1rem;
