@@ -117,6 +117,14 @@ function toggleSlot(slotId) {
         slotElement.classList.add('selected');
     }
 }
+
+function startDrag(slotId, event) {
+    event.preventDefault();
+    isDragging = false;
+    dragMode = selectedSlots.has(slotId) ? 'deselect' : 'select';
+    applyDragToSlot(slotId);
+}
+
 function continueDrag(slotId) {
     if (dragMode === null) return;
     isDragging = true;
