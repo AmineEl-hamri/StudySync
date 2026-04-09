@@ -1950,5 +1950,15 @@ body {
     }
 }
 
+.day-header:hover {
+    background: #3730A3;
+    transition: background 0.2s;
+}
 
+.time-label:hover {
+    background: #E0E7FF;
+    color: #4F46E5;
+    font-weight: 700;
+    transition: all 0.2s;
+}
 
