@@ -78,7 +78,7 @@ function generateAvailabilityGrid() {
     });
     html += '</tr></thead><tbody>';
 
-    TIME_SLOTS.forEach((time, timeIndex) => {
+    TIME_SLOTS.forEach((time) => {
         html += `<tr>
             <td class="time-label" onclick="selectEntireRow('${time}')" style="cursor:pointer;" title="Click to select all ${time}">
                 ${time}
@@ -91,7 +91,9 @@ function generateAvailabilityGrid() {
                     onmousedown="startDrag('${slotId}', event)"
                     onmouseenter="continueDrag('${slotId}')"
                     onmouseup="endDrag()"
-                    onclick="toggleSlot('${slotId}')">
+                    ontouchstart="handleTouchStart('${slotId}', event)"
+                    ontouchmove="handleTouchMove(event)"
+                    ontouchend="endDrag()">
                 </div>
             </td>`;
         });
@@ -101,7 +103,6 @@ function generateAvailabilityGrid() {
     html += '</tbody></table>';
     grid.innerHTML = html;
 
-    // Prevent text selection while dragging
     grid.addEventListener('mouseleave', endDrag);
     document.addEventListener('mouseup', endDrag);
 }
@@ -145,6 +146,27 @@ function applyDragToSlot(slotId) {
     } else {
         selectedSlots.delete(slotId);
         slotElement.classList.remove('selected');
+    }
+}
+
+function handleTouchStart(slotId, event) {
+    event.preventDefault(); // prevents scroll while selecting
+    isDragging = false;
+    dragMode = selectedSlots.has(slotId) ? 'deselect' : 'select';
+    applyDragToSlot(slotId);
+}
+
+function handleTouchMove(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    // Find which element is under the finger
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (el && el.classList.contains('time-slot')) {
+        const slotId = el.getAttribute('data-slot');
+        if (slotId) {
+            isDragging = true;
+            applyDragToSlot(slotId);
+        }
     }
 }
 
