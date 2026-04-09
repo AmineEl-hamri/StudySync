@@ -3,34 +3,54 @@
 <head>
      <title> StudySync </title>
      <meta charset="UTF-8">
+      <!-- Ensures proper rendering and touch scaling on mobile devices -->
      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Main stylesheet for all pages and components -->
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
+<!-- Navigation bar, Sticky top bar containing the logo, navigation links, authorisiation buttons
+     and the logged-in user dropdown menu.
+     Links are shown or hidden by auth.js depending on whether the user is logged in.
+     Hamburger button replaces the links on a mobile device. --> 
       <nav>
             <div class="container">
+                 <!-- Clicking the logo always redirects to the home section. -->
                   <div class="logo" onclick="showHome()">
                         <span>StudySync </span>
                   </div>
+                 <!-- Hamburger icon only visible on mobile through the CSS media query. -->
                  <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()">☰</button>
+                 
+                 <!-- Navigation links, collapse into mobile dropdown when hamburger is clicked -->
                   <div class="navigation-links" id="navLinks">
                   <a onclick="showHome(); closeMobileMenu()">Home</a>
+
+                 <!-- Dashboard and Meeting links, hidden by default and only show when logged in. --> 
                   <a onclick="showDashboard(); closeMobileMenu()" style="display: none;" id="dashboardLink">Dashboard</a>
                     <a onclick="showMyMeetings(); closeMobileMenu()" style="display: none;" id="meetingsLink">My Meetings</a>
                   <a onclick="showAbout(); closeMobileMenu()">About</a>
                   <a onclick="showContact(); closeMobileMenu()">Contact</a>
+
+                       <!-- My locations button, hidden until user logs in. -->
                        <button onclick="openLocationSettings()" class="settings-btn" style="display: none;" id="locationSettingsBtn">
                             My Locations
                        </button>
+
+                       <!-- Authorisation buttons, show when logged out but are hidden upon login. -->
                         <div class="auth-buttons" id="authButtons">
                               <button class="btn-login" onclick="openLoginModal()">Login</button>
                               <button class="btn-register" onclick="openRegisterModal()">Register</button>
                         </div>
+
+                       <!-- User menu, shows when logged in. -->
                         <div class="user-menu" id="userMenu">
+                             <!-- Clicking the username toggles the dropdown. -->
                              <div class="user-name" onclick="toggleDropdown()">
                                   <span id="userName">User</span>
                              </div>
+
+                             <!-- Dropdown with navigation and logout. -->
                              <div class="dropdown" id="dropdown">
                                   <a onclick="showDashboard()">Dashboard</a>
                                   <a onclick="showProfile()">Profile</a>
@@ -41,60 +61,100 @@
       </div>
 </nav>
 
+<!-- Home / Hero section
+     Default page shown when first entering the website.
+     It becomes hidden when the user navigates to any other section.
+     showHome() in main.js controls this view. -->
 <section id="home" class="hero">
       <div class="container">
             <h1>Welcome to <span class="highlight">StudySync</span></h1>
             <p class="tagline">Smart scheduling for study groups</p>
             <p class="subtitle">No more wasting time organising a slot with 6 people. Let StudySync find the perfect meeting time for you. </p>
             <div class="cta-buttons">
+                 <!-- Primary CTA (call to action), opens registration modal. -->
                   <button class="btn-primary" onclick="openRegisterModal()">Get Started</button>
+                 <!-- Secondary CTA, navigates to About section. -->
                   <button class="btn-secondary" onclick="showAbout()">Learn More </button>
             </div>
       </div>
 </section>
+
+<!-- Dashboard section
+     Shows after login. It lists the user's study groups in a card grid.
+     loadGroups() in groups.js fetches from GET /api/groups?user_id=
+     Group cards are injected into #groupsGrid by renderGroups()
+     dashboardUserName is set by checkLoginStatus in auth.js -->
+     
 <section id="dashboard" class="dashboard" style="display:none;">
      <div class="container">
           <div class="dashboard-header">
+               <!-- Username set on login by auth.js -->
                <h1>Welcome back, <span id="dashboardUserName"></span>! </h1>
                <p>Manage your groups and schedule meetings.</p>
           </div>
           <div class="dashboard-actions">
+               <!-- Opens the Create Group Modal. -->
                <button class="btn-create" onclick="openCreateGroupModal()"> Create New Group </button>
           </div>
 
           <div class="groups-section">
                <h2>Your Study Groups</h2>
+               <!-- Group cards are generated here dynamically by groups.js --> 
                <div class="groups-grid" id="groupsGrid">
                </div>
           </div>
      </div>
 </section>
+
+     <!-- My Meetings section
+     Shows all meetings the current user is part of.
+     Populated by loadAllMeetings() in meetings.js
+     Fetches from GET /api/users/<id>/meetings
+     Filter buttons call filterMeetings() to show all, upcoming, and past meetings. -->
      <section id="myMeetings" class="my-meetings-page" style="display:none;">
          <div class="container">
              <div class="page-header">
                  <h1>📅 My Meetings</h1>
                  <p>All your upcoming study sessions</p>
              </div>
-     
+             <!-- Filter tabs, filterMeetings() in meetings.js handles visibility. -->
              <div class="meetings-filter">
                  <button class="filter-btn active" onclick="filterMeetings('all')">All Meetings</button>
                  <button class="filter-btn" onclick="filterMeetings('upcoming')">Upcoming</button>
                  <button class="filter-btn" onclick="filterMeetings('past')">Past</button>
              </div>
-     
+
+             <!-- Meeting cards injected here by displayAllMeetings() in meetings.js -->
              <div class="meetings-grid" id="allMeetingsGrid">
                  <p style="text-align: center; color: #666; padding: 3rem;">Loading meetings...</p>
              </div>
          </div>
      </section>
+
+     <!-- Group Details section
+     Shown when user clicks into a specific group.
+     It contains the group info, meeting location, availability grid, CSP schedule finder,
+     and confirmed meetings list.
+     Opened by viewGroup() in scheduler.js
+     Closed by backToDashboard() which returns to dashboard. -->
      <section id="groupDetails" class="group-details" style="display:none;">
           <div class="container">
+
+               <!-- Returns user to the dashboard view. -->
                <button class="btn-back" onclick="backToDashboard()"> Back to Dashboard</button>
+
+               <!-- Group metadata, filled in from viewGroup() in scheduler.js -->
                <div class="group-info">
                     <h1 id="groupDetailsName">Group Name</h1>
                     <p id="groupDetailsDescription">Group Description</p>
                     <p><strong>Members:</strong> <span id="groupDetailsMemberCount">0</span> </p>
                </div>
+
+               <!-- Meeting location input
+               Edited only by the group owner.
+               Read-only for other members.
+               viewGroup() sets disabled state and label text depending on ownership.
+               saveMeetingLocation() in scheduler.js operates PUT /api/groups/<id>/location --> 
                <div class="location-section">
                     <label> Meeting Location</label>
                     <p style="color: #6B7280; font-size: 14px; margin: 5px 0 10px 0;">
@@ -104,13 +164,24 @@
                          <input type="text" id="meetingLocation" placeholder="e.g. Stockwell Library, London UK">
                          <button onclick="saveMeetingLocation()">Save Location </button>
                     </div>
+
+                    <!-- Displays the currently saved meeting location after load -->
                     <div id="currentMeetingLocation" style="margin-top: 10px; font-size: 14px; color: #4F46E5;">
                     </div>
                </div>
+
+               <!-- Availability section
+               Google Calendar import button triggers OAuth flow if not connected
+               Grid is built dynamically by generateAvailabilityGrid() in scheduler.js
+               Slots are toggled by toggleSlot(), drag-selected by startDrag(),continueDrag()
+               Clicking the day header selects the entire day.
+               Clicking the time label selects the entire row.
+               saveAvailability() posts to POST /api/availability -->
                <div class="availability-section">
                     <h2>Set Your Availability</h2>
                     <p>Click on time slots when you're available to meet</p>
-
+                    
+                    <!-- Google Calendar import, triggers OAuth if not already connected. -->
                     <div class="import-section">
                          <button class="btn-import-google" onclick="importGoogleCalendar()">
                               Import from Google Calendar
@@ -118,36 +189,61 @@
                          <span id="googleConnectionStatus" class="connection-status"></span>
                     </div>
 
+                    <!-- Colour legend for the availability grid. -->
                     <div class="legend">
                          <span class="legend-item"><span class="legend-box available"></span>Available</span>
                          <span class="legend-item"><span class="legend-box unavailable"></span>Unavailable</span>
                     </div>
+
+                    <!-- Availability grid table created here through generateAvailabilityGrid() -->
                     <div class="availability-grid" id="availabilityGrid">
                     </div>
 
+                    <!-- Grid action buttons. -->
                     <div class="availability-actions">
+                         <!-- Saves selected slots through POST /api/availability -->
                          <button class="btn-primary" onclick="saveAvailability()">Save My Availability</button>
+                         
+                         <!-- Selects all slots. -->
                          <button class="btn-secondary" onclick="selectAllAvailability()">Select All</button>
+                         
+                         <!-- Clears all selected slots. -->
                          <button class="btn-secondary" onclick="clearAvailability()">Clear All</button>
+                         
+                         <!-- Second Google Calendar import button for convenience. -->
                          <button class="btn-import" id="importCalendarBtn" onclick="importGoogleCalendar()">Import Availability</button>
                     </div>
                </div>
+
+               <!-- Shows availability status for each group member (submitted/pending).
+               Generated through showAvailabilityStatus() in scheduler.js
+               Compares submitted emails against group member list. -->
                <div class="availability-status">
                     <h3>Availability Status</h3>
                     <div id="availabilityStatus">
                     </div>
                </div>
 
+               <!-- Starts the CSP scheduling algorithm.
+               findMeetingTimes() in scheduler.js does GET /api/schedule/<id> -->
                <div class="schedule-section">
                     <button class="btn-create" onclick="findMeetingTimes()">Find Optimal Meeting Times</button>
                </div>
 
+               <!-- Schedule results panel, hidden until the CSP is called.
+               displayScheduleResults() injects ranked time options here.
+               Each options shows match %, member list, travel times, and schedule button.
+               Schedule button only visible to group owner. -->
                <div class="schedule-results" id="scheduleResults" style="display: none;">
                     <h2> Recommended Meeting Times</h2>
                     <div id="recommendedTimes">
                     </div>
                </div>
-               
+
+               <!-- Confirmed meetings for the group.
+               Populated by displayGroupMeetings() in scheduler.js
+               Fetches from GET /api/meetings/<group_id>
+               Each card has a cancel button, DELETE /api/meetings/<id> -->
                <div class="scheduled-meetings-section">
                         <h2>📅 Scheduled Meetings</h2>
                         <div id="scheduledMeetings">
@@ -155,13 +251,17 @@
                </div>
           </div>
      </section>
-     
+
+     <!-- About section
+     Static informational page about the project.
+     Shown using showAbout() in main.js -->
      <section id="about" style="display:none; padding: 3rem 0; min-height: 70vh;">
          <div class="container">
              <div class="page-header">
                  <h1>About StudySync</h1>
                  <p>Helping students schedule smarter, together.</p>
              </div>
+              <!-- Feature highlight cards. -->
              <div class="about-grid">
                  <div class="about-card">
                      <div class="about-icon">🎯</div>
@@ -184,6 +284,7 @@
                      <p>StudySync calculates real travel times for each member so everyone knows when to leave and can plan their journey in advance.</p>
                  </div>
              </div>
+              <!-- Project background -->
              <div class="about-story">
                  <h2>The Story</h2>
                  <p>StudySync started as a final year Computer Science project, born out of frustration with the chaos of organising group study sessions. What began as a simple scheduling tool grew into a full-stack platform with smart algorithms, calendar sync, and real-time travel calculations.</p>
@@ -191,7 +292,12 @@
              </div>
          </div>
      </section>
-     
+
+     <!-- Contact section
+     Contact form, information panel, and FAQ section.
+     Form submits via submitContactForm() in main.js through POST /api/contact
+     FAQ toggles via toggleFAQ() in main.js
+     Redirected by showContact() in main.js -->
      <section id="contact" style="display:none; padding: 3rem 0; min-height: 70vh;">
          <div class="container">
              <div class="page-header">
@@ -199,9 +305,13 @@
                  <p>Got a question or feedback? We'd love to hear from you.</p>
              </div>
              <div class="contact-grid">
+
+                  <!-- Left side, contact form -->
                  <div class="contact-form-section">
                      <div class="groups-section">
                          <h2>Send a Message</h2>
+
+                          <!-- submitContactForm() posts to /api/contact which sends an email via SMTP -->
                          <form onsubmit="submitContactForm(event)">
                              <div class="form-group">
                                  <label>Your Name</label>
@@ -219,12 +329,16 @@
                                  <label>Message</label>
                                  <textarea id="contactMessage" rows="5" placeholder="Your message here..." style="width:100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; font-family: inherit; resize: vertical;" required></textarea>
                              </div>
+
+                              <!-- Success/error feedback shown after submission. -->
                              <div id="contactSuccess" class="success-message"></div>
                              <div id="contactError" class="error-message"></div>
                              <button type="submit" class="btn-submit">Send Message</button>
                          </form>
                      </div>
                  </div>
+
+                  <!-- Right side: contact details, social links, and FAQ -->
                  <div class="contact-info-section">
                      <div class="groups-section" style="margin-bottom: 1.5rem;">
                          <h2>Get In Touch</h2>
@@ -242,6 +356,8 @@
                                  <p>amineel-hamri.github.io/StudySync</p>
                              </div>
                          </div>
+
+                          <!-- Social Media links. -->
                          <div class="contact-social">
                              <h3>Follow Us</h3>
                              <div class="social-links">
@@ -250,6 +366,8 @@
                              </div>
                          </div>
                      </div>
+
+                      <!-- FAQ section, toggleFaq() expands or collapses each item. -->
                      <div class="groups-section">
                          <h2>FAQ</h2>
                          <div class="faq-item">
@@ -282,6 +400,11 @@
          </div>
      </section>
 
+     <!-- Profile section.
+     Lets users update name/email, change password, upload a profile picture,
+     manage availability preferences, and delete their account.
+     Shown by showProfile() in main.js
+     loadProfile() populates fields from GET /api/users/<id> -->
      <section id="profile" style="display:none; padding: 3rem 0; min-height: 70vh;">
          <div class="container">
              <div class="page-header">
@@ -289,16 +412,25 @@
                  <p>Manage your personal settings and security.</p>
              </div>
              <div class="profile-grid">
+
+                  <!-- Left column: avatar and display information. -->
                  <div class="profile-avatar-section groups-section">
+                      <!-- Shows first letter of name, or the profile picture if available. -->
                      <div class="avatar-circle" id="profileAvatar">A</div>
                      <h2 id="profileDisplayName">Amine</h2>
                      <p id="profileDisplayEmail" style="color:#666;">email@email.com</p>
+
+                      <!-- Hidden file input, label acts as the clickable button. -->
                      <label class="avatar-upload-btn">
                          📷 Change Photo
                          <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="previewAvatar(event)">
                      </label>
                  </div>
+
+                  <!-- Right column: profile forms. -->
                  <div class="profile-details-section">
+
+                      <!-- Personal info form, updateProfile() does PUT /api/users/<id> -->
                      <div class="groups-section" style="margin-bottom: 1.5rem;">
                          <h2>Personal Information</h2>
                          <div class="form-group">
@@ -313,6 +445,8 @@
                          <div id="profileUpdateError" class="error-message"></div>
                          <button class="btn-submit" onclick="updateProfile()">Save Changes</button>
                      </div>
+
+                      <!-- Password change form using changePassword(). -->
                      <div class="groups-section">
                          <h2>Change Password</h2>
                          <div class="form-group">
@@ -331,14 +465,27 @@
                          <div id="passwordError" class="error-message"></div>
                          <button class="btn-submit" onclick="changePassword()">Update Password</button>
                      </div>
+
+                      <!-- Availability preferences
+                      Three collapsible blocks users can interact with.
+                      - Work/Uni Hours, blocks recurring work/lecture times.
+                      - Personal/Focus times, blocks personal time slots.
+                      - Custom Blocked Times, Allows the user to block a custom time period.
+                      Each block body is shown/hidden by togglePrefBlock() in preferences.js
+                      offerToApplyPreferences() in preferences.js shows the apply modal when
+                      the user enters a group and has saved preferences. -->
                       <div class="groups-section" style="margin-top: 1.5rem;">
                            <h2>⏰ Availability Preferences</h2>
                            <p style="color:#666; margin-bottom: 1.5rem; font-size:0.95rem;">
                                 Set your personal schedule constraints. These will be offered as a template when you join a new group.
                            </p>
+
+                           <!-- Block 1. -->
                            <div class="pref-block">
                                 <div class="pref-block-header">
                                      <span>🎓 Work / Uni Hours</span>
+
+                                     <!-- Toggle enables/disables the block body below. -->
                                      <label class="pref-toggle">
                                           <input type="checkbox" id="prefWorkEnabled" onchange="togglePrefBlock('work')">
                                           <span class="pref-toggle-slider"></span>
@@ -346,6 +493,8 @@
                                 </div>
                                 <div class="pref-block-body" id="prefWorkBody" style="display:none;">
                                      <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">Block out your working or university hours so you're never marked available during them. </p>
+
+                                     <!-- Day selection checkboxes. -->
                                      <div class="pref-days">
                                           <label><input type="checkbox" class="work-day" value="0"> Mon</label>
                                           <label><input type="checkbox" class="work-day" value="1"> Tue</label>
@@ -355,6 +504,8 @@
                                           <label><input type="checkbox" class="work-day" value="5"> Sat</label>
                                           <label><input type="checkbox" class="work-day" value="6"> Sun</label>
                                       </div>
+
+                                     <!-- Start and end time selectors. -->
                                      <div class="pref-time-now">
                                           <div class="pref-time-group">
                                                <label>From</label>
@@ -375,6 +526,8 @@
                                      </div>
                                 </div>
                            </div>
+
+                           <!-- Block 2. -->
                            <div class="pref-block">
                                 <div class="pref-block-header">
                                      <span>🧘 Personal Time</span>
@@ -416,6 +569,8 @@
                                      </div>
                                 </div>
                            </div>
+
+                           <!-- Block 3. -->
                            <div class="pref-block">
                                 <div class="pref-block-header">
                                      <span>🚫 Custom Blocked Periods</span>
@@ -426,10 +581,14 @@
                                 </div>
                                 <div class="pref-block-body" id="prefCustomBody" style="display:none;">
                                      <p style="color:#666; font-szie:0.85rem; margin-bottom:1rem;">Add any other recurring time blocks you want kept free.</p>
+                                     
+                                     <!-- Custom block rows injected here by addCustomBlock(). -->
                                      <div id="customBlocksList"></div>
                                      <button type="button" class="btn-add-block" onclick="addCustomBlock()">+ Add Time Block</button>
                                 </div>
                            </div>
+                           
+                           <!-- Preferences save feedback and submit. -->
                            <div id="prefSaveSuccess" class="success-message" style="margin-top:1rem;"></div>
                            <div id="prefSaveError" class="error-message" style="margin-top:1rem;"></div>
                            <button class="btn-submit" style="margin-top:1.5rem;" onclick="savePreferences()">
@@ -439,7 +598,11 @@
                  </div>
              </div>
          </div>
-         <div class="groups-section" style="margin-top: 1.5rem; border-left: 4px solid #EF4444;">
+         
+          <!-- Danger Zone, outside .container for visual separation.
+          deleteAccount() in main.js DELETE /api/users/<id>
+          Removes all user data: profile, groups, availability, meetings, and tokens. -->
+          <div class="groups-section" style="margin-top: 1.5rem; border-left: 4px solid #EF4444;">
               <h2 style="color: #EF4444;">Danger Zone</h2>
               <p style="color: #666; margin-bottom: 1rem;">Permanently delete your account and all associated data. This cannot be undone.</p>
               <button onclick="deleteAccount()" style="background: #EF4444; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem;">
@@ -447,6 +610,12 @@
               </button>
           </div>
      </section>
+
+     <!-- Modals
+     All modal dialogs in the application.
+     Shown or hidden by toggling display style and adding .active class. -->
+
+     <!-- Login modal, login() in auth.js does POST /api/login -->
      <div class ="modal" id="loginModal">
           <div class="modal-content">
                <span class="close-modal" onclick="closeLoginModal()">&times;</span>
@@ -473,6 +642,7 @@
           </div>
      </div>
 
+     <!-- Register modal, register() in auth.js. -->
      <div class="modal" id="registerModal">
           <div class="modal-content">
                <span class="close-modal" onclick="closeRegisterModal()">&times;</span>
@@ -507,6 +677,8 @@
           </div>
      </div>
 
+     <!-- Create group modal.
+     addMember() appends email tags to #membersList before submission. -->
           <div class="modal" id="createGroupModal">
                <div class="modal-content">
                     <span class="close-modal" onclick="closeCreateGroupModal()">&times;</span>
@@ -525,10 +697,14 @@
 
                          <div class="form-group">
                               <label>Group Members</label>
+
+                              <!-- Type email and click Add, addMember() appends to list below. -->
                               <div class="member-input-group">
                                    <input type="email" id="memberEmail" placeholder="member@email.com">
                                    <button type="button" class="btn-add-member" onclick="addMember()">Add</button>
                               </div>
+
+                              <!-- Member email tags appear here before the form is submitted. -->
                               <div class="members-list" id="membersList">
                               </div>
                          </div>
@@ -540,6 +716,10 @@
                     </form>
                </div>
           </div>
+
+     <!-- My locations modal.
+     Saves home or work addresses for travel time calculation.
+     Saved locations displayed by displaySavedLocations(). -->
      <div id="locationModal" class="modal">
           <div class="modal-content">
                <span class="close" onclick="closeLocationModal()">&times;</span>
@@ -561,15 +741,27 @@
                          Save Work location
                     </button>
                </div>
+
+               <!-- Saved locations list populated by displaySavedLocations() in scheduler.js -->
                <div id="savedLocations" style="margin-top: 20px;">
                     
                </div>
           </div>
      </div>
 
+     <!-- Onboarding tutorial overlay.
+     Shown to new users on their first login.
+     Managed entirely by tutorial.js. Steps, icons, and descriptions defined in TUTORIAL_STEPS array.
+     Progress bar, step indicator, back/next/skip buttons all in tutorial.js.
+     Completion saved via POST /api/users/<id>/tutorial
+     tutorial_complete flag checked on every login by checkLoginStatus(). -->
+     
      <div id="tutorialOverlay" style="display:none;">
+          <!-- Semi-transparent backdrop behind the card. -->
          <div id="tutorialBackdrop"></div>
          <div id="tutorialCard">
+
+              <!-- Progress bar fills as user advances through steps. -->
              <div id="tutorialProgress">
                  <div id="tutorialProgressBar"></div>
              </div>
@@ -579,25 +771,40 @@
              <p id="tutorialDescription"></p>
              <div id="tutorialTip"></div>
              <div id="tutorialActions">
+                  <!-- Skip hidden on last step, skipTutorial() marks as complete without finishing. -->
                  <button id="tutorialSkip" onclick="skipTutorial()">Skip Tutorial</button>
                  <div id="tutorialNavButtons">
+                      <!-- Back hidden on first step. -->
                      <button id="tutorialBack" onclick="tutorialBack()">← Back</button>
+                      <1-- Changes to "Get Started!" on final step. -->
                      <button id="tutorialNext" onclick="tutorialNext()"></button>
                  </div>
              </div>
          </div>
      </div>
+
+     <!-- Apply prefernces modal
+     Shown when a user opens a group and already has saved preferences.
+     Shows a preview of which time blocks will be blocked. -->
      <div class="modal" id="applyPreferencesModal">
          <div class="modal-content">
              <h2>⏰ Apply Your Preferences?</h2>
              <p class="modal-subtitle">You have availability preferences saved. Would you like to automatically block those times for this group?</p>
-             <div id="prefPreviewList" style="margin: 1rem 0; background:#f9fafb; padding:1rem; border-radius:8px; font-size:0.9rem; color:#4B5563;"></div>
+             
+              <!-- Preview of blocks to be applied, injected by offerToApplyPreferences(). -->
+              <div id="prefPreviewList" style="margin: 1rem 0; background:#f9fafb; padding:1rem; border-radius:8px; font-size:0.9rem; color:#4B5563;"></div>
              <div style="display:flex; gap:1rem; margin-top:1.5rem;">
                  <button class="btn-secondary" style="flex:1;" onclick="closeApplyPreferencesModal()">No Thanks</button>
                  <button class="btn-submit" style="flex:1;" onclick="applyPreferencesToGroup()">Apply Preferences</button>
              </div>
          </div>
      </div>
+
+     <!-- Privacy Policy Section
+     Static page explaining data collection, retention and GDPR rights.
+     shown by showPrivacyPolicy()
+     Linked from the footer on every page. -->
+     
      <section id="privacyPolicy" style="display:none; padding: 3rem 0; min-height: 70vh;">
          <div class="container">
              <div class="page-header">
@@ -649,6 +856,8 @@
              </div>
          </div>
      </section>
+
+     <!-- Footer. Shown on everypage. Contains copyright and privacy policy link. -->
      <footer style="background: white; border-top: 1px solid #E5E7EB; padding: 1.5rem 0; margin-top: 2rem; text-align: center;">
          <div class="container">
              <p style="color: #9CA3AF; font-size: 0.9rem;">
@@ -657,12 +866,18 @@
              </p>
          </div>
      </footer>
-    <script src="js/auth.js"></script>
-     <script src="js/groups.js"></script>
-     <script src="js/main.js"></script>
-     <script src="js/scheduler.js"></script>
-     <script src="js/meetings.js"></script> <!-- Meetings Page -->
-     <script src="js/tutorial.js"></script>
-     <script src="js/preferences.js"></script>
+
+     <!-- Javascript Modules
+     Loaded at the bottom so the DOM (Document Object Model is ready before scripts run.
+     Order matters, auth.js must be loaded first as it defines API_URL and 
+     checkLoginStatus() which other modules depend on. -->
+     
+    <script src="js/auth.js"></script> <!-- Login, register, logout, session management. -->
+     <script src="js/groups.js"></script> <!-- Group creation, rendering, member management. -->
+     <script src="js/main.js"></script> <!-- Navigation, profile, contact, shared utilities. -->
+     <script src="js/scheduler.js"></script> <!-- Availability grid, CSP scheduling, meetings. -->
+     <script src="js/meetings.js"></script> <!-- Meetings Page, filtering, cancellation. --> 
+     <script src="js/tutorial.js"></script> <!-- Onboarding tutorial. -->
+     <script src="js/preferences.js"></script> <!-- Availability preferences management. -->
 </body>
 </html>
