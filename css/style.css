@@ -1992,4 +1992,6 @@ body {
     font-weight: 700;
     transition: all 0.2s;
 }
-
+.availability-table .time-slot {
+    touch-action: none;  /* prevents scrolling on mobile while selecting timeslots */
+}
