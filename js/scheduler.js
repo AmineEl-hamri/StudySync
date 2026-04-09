@@ -66,41 +66,125 @@ function backToDashboard() {
   document.getElementById('dashboard').style.display = 'block';
   selectedSlots.clear();
 }
+let isDragging = false;
+let dragMode = null;
 
 function generateAvailabilityGrid() {
-  const grid = document.getElementById('availabilityGrid');
+    const grid = document.getElementById('availabilityGrid');
 
-  let html = '<table class="availability-table"><thead><tr><th>Time</th>';
-
-  DAYS.forEach(day => {
-    html += `<th>${day}</th>`;
-  });
-  html += '</tr></thead><tbody>';
-
-  TIME_SLOTS.forEach(time => {
-    html += `<tr><td class="time-label">${time}</td>`;
-    
+    let html = '<table class="availability-table"><thead><tr><th>Time</th>';
     DAYS.forEach((day, dayIndex) => {
-      const slotId = `${dayIndex}-${time}`;
-      html += `<td><div class="time-slot" data-slot="${slotId}" onclick="toggleSlot('${slotId}')"></div></td>`;
+        html += `<th class="day-header" onclick="selectEntireDay(${dayIndex})" style="cursor:pointer;" title="Click to select all ${day}">${day}</th>`;
     });
-     
-    html += '</tr>';
-  });
-  html += '</tbody></table>';
-  grid.innerHTML = html;
+    html += '</tr></thead><tbody>';
+
+    TIME_SLOTS.forEach((time, timeIndex) => {
+        html += `<tr>
+            <td class="time-label" onclick="selectEntireRow('${time}')" style="cursor:pointer;" title="Click to select all ${time}">
+                ${time}
+            </td>`;
+        DAYS.forEach((day, dayIndex) => {
+            const slotId = `${dayIndex}-${time}`;
+            html += `<td>
+                <div class="time-slot"
+                    data-slot="${slotId}"
+                    onmousedown="startDrag('${slotId}', event)"
+                    onmouseenter="continueDrag('${slotId}')"
+                    onmouseup="endDrag()"
+                    onclick="toggleSlot('${slotId}')">
+                </div>
+            </td>`;
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    grid.innerHTML = html;
+
+    // Prevent text selection while dragging
+    grid.addEventListener('mouseleave', endDrag);
+    document.addEventListener('mouseup', endDrag);
 }
 
 function toggleSlot(slotId) {
-  const slotElement = document.querySelector(`[data-slot="${slotId}"]`);
+    if (isDragging) return; // handled by drag
+    const slotElement = document.querySelector(`[data-slot="${slotId}"]`);
+    if (selectedSlots.has(slotId)) {
+        selectedSlots.delete(slotId);
+        slotElement.classList.remove('selected');
+    } else {
+        selectedSlots.add(slotId);
+        slotElement.classList.add('selected');
+    }
+}
+function continueDrag(slotId) {
+    if (dragMode === null) return;
+    isDragging = true;
+    applyDragToSlot(slotId);
+}
 
-  if (selectedSlots.has(slotId)) {
-    selectedSlots.delete(slotId);
-    slotElement.classList.remove('selected');
-  } else {
-    selectedSlots.add(slotId);
-    slotElement.classList.add('selected');
-  }
+function endDrag() {
+    isDragging = false;
+    dragMode = null;
+}
+
+function applyDragToSlot(slotId) {
+    const slotElement = document.querySelector(`[data-slot="${slotId}"]`);
+    if (!slotElement) return;
+    if (dragMode === 'select') {
+        selectedSlots.add(slotId);
+        slotElement.classList.add('selected');
+    } else {
+        selectedSlots.delete(slotId);
+        slotElement.classList.remove('selected');
+    }
+}
+
+function selectEntireDay(dayIndex) {
+    const daySlots = TIME_SLOTS.map(time => `${dayIndex}-${time}`);
+    const allSelected = daySlots.every(slot => selectedSlots.has(slot));
+
+    daySlots.forEach(slotId => {
+        const el = document.querySelector(`[data-slot="${slotId}"]`);
+        if (!el) return;
+        if (allSelected) {
+            selectedSlots.delete(slotId);
+            el.classList.remove('selected');
+        } else {
+            selectedSlots.add(slotId);
+            el.classList.add('selected');
+        }
+    });
+}
+
+function selectEntireRow(time) {
+    const rowSlots = DAYS.map((_, dayIndex) => `${dayIndex}-${time}`);
+    const allSelected = rowSlots.every(slot => selectedSlots.has(slot));
+
+    rowSlots.forEach(slotId => {
+        const el = document.querySelector(`[data-slot="${slotId}"]`);
+        if (!el) return;
+        if (allSelected) {
+            selectedSlots.delete(slotId);
+            el.classList.remove('selected');
+        } else {
+            selectedSlots.add(slotId);
+            el.classList.add('selected');
+        }
+    });
+}
+
+function selectAllAvailability() {
+    DAYS.forEach((_, dayIndex) => {
+        TIME_SLOTS.forEach(time => {
+            const slotId = `${dayIndex}-${time}`;
+            const el = document.querySelector(`[data-slot="${slotId}"]`);
+            if (el) {
+                selectedSlots.add(slotId);
+                el.classList.add('selected');
+            }
+        });
+    });
 }
 
 function saveAvailability() {
