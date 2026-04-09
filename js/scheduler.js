@@ -32,7 +32,7 @@ function viewGroup(groupId) {
               document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
               document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
 
-            const isOwner = group.ownerId === currentUser.id;
+            const isOwner = group.ownerId === parseInt(currentUser.id);
             const locationSection = document.querySelector('.location-section');
             const locationInput = document.getElementById('meetingLocation');
             const locationButton = locationSection.querySelector('button');
@@ -347,7 +347,7 @@ function displayScheduleResults(optimalTimes) {
         .then(r => r.json())
         .then(data => {
             const group = data.groups.find(g => g.id === currentGroupId);
-            const isOwner = group && group.ownerId === currentUser.id;
+            const isOwner = group && group.ownerId === parseInt(currentUser.id);
 
             const resultsDiv = document.getElementById('scheduleResults');
             const timesDiv = document.getElementById('recommendedTimes');
@@ -757,7 +757,7 @@ function scheduleMeeting(dayOfWeek, meetingTime) {
             day_of_week: dayOfWeek,
             meeting_time: meetingTime,
             meeting_date: meetingDateStr,
-            created_by: currentUser.id
+            created_by: parseInt(currentUser.id)
         })
     })
     .then(response => response.json())
