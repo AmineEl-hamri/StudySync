@@ -217,19 +217,23 @@ function selectAllAvailability() {
     });
 }
 
+let isSaving = false;
+
 function saveAvailability() {
+    if (isSaving) return;
     if (selectedSlots.size === 0) {
         alert('Please select at least one time slot!');
         return;
     }
-    
+    isSaving = true;
+    const btn = document.querySelector('.availability-actions .btn-primary');
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    
     fetch(`${API_URL}/api/availability`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             group_id: currentGroupId,
             user_id: currentUser.id,
@@ -239,7 +243,7 @@ function saveAvailability() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(' Availability saved successfully!');
+            alert('✅ Availability saved successfully!');
             loadAvailability(currentGroupId);
         } else {
             alert('Failed to save availability: ' + (data.error || 'Unknown error'));
@@ -248,14 +252,21 @@ function saveAvailability() {
     .catch(error => {
         console.error('Save availability error:', error);
         alert('Network error. Please try again.');
+    })
+    .finally(() => {
+        isSaving = false;
+        btn.disabled = false;
+        btn.textContent = 'Save My Availability';
     });
 }
 
 function clearAvailability() {
-  selectedSlots.clear();
-  document.querySelectorAll('.time-slot.selected').forEach(slot => {
-    slot.classList.remove('selected');
-  });
+    if (selectedSlots.size === 0) return; // nothing to clear
+    if (!confirm('Clear all selected time slots? This cannot be undone.')) return;
+    selectedSlots.clear();
+    document.querySelectorAll('.time-slot.selected').forEach(slot => {
+        slot.classList.remove('selected');
+    });
 }
 
 function loadAvailability(groupId) {
@@ -322,8 +333,15 @@ function showAvailabilityStatus(availability) {
         });
 }
                                                       
+let isScheduling = false;
+
 function findMeetingTimes() {
-    // Call API to run CSP algorithm
+    if (isScheduling) return; // prevent double-click
+    isScheduling = true;
+    const btn = document.querySelector('.schedule-section .btn-create');
+    btn.disabled = true;
+    btn.textContent = '⏳ Finding times...';
+
     fetch(`${API_URL}/api/schedule/${currentGroupId}`)
         .then(response => response.json())
         .then(data => {
@@ -336,6 +354,11 @@ function findMeetingTimes() {
         .catch(error => {
             console.error('Find times error:', error);
             alert('Network error. Please try again.');
+        })
+        .finally(() => {
+            isScheduling = false;
+            btn.disabled = false;
+            btn.textContent = 'Find Optimal Meeting Times';
         });
 }
 
