@@ -856,7 +856,14 @@
              </div>
          </div>
      </section>
-
+     <div id="prefToast">
+          <h4>⏰ Apply Your Preferences?</h4>
+          <p>You have saved availability preferences. Apply them to this group?</p>
+          <div class="toast-buttons">
+               <button class="toast-btn-dismiss" onclick="document.getElementById('prefToast').style.display='none'">Not Now</button>
+             <button class="toast-btn-apply" onclick="applyPreferencesToGroup(); document.getElementById('prefToast').style.display='none'">Apply</button>
+          </div>
+     </div>
      <!-- Footer. Shown on everypage. Contains copyright and privacy policy link. -->
      <footer style="background: white; border-top: 1px solid #E5E7EB; padding: 1.5rem 0; margin-top: 2rem; text-align: center;">
          <div class="container">
