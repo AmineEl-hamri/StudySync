@@ -1,71 +1,68 @@
 let currentGroupId = null;
 let selectedSlots = new Set();
+let currentGroupOwnerIdCache = null; // cached owner ID to avoid double fetches. 
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 
 function viewGroup(groupId) {
-  currentGroupId = groupId;    
-
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-  if (!currentUser) {
-    alert('Please log in first!');
-    openLoginModal();
-    return;
-  }
-  fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
-      .then(response => response.json())
-      .then(data => {
-          if (data.success) {
-              const group = data.groups.find(g => g.id === groupId);
-              
-              if (!group) {
-                  alert('Group not found!');
-                  return;
-              }
-                
-              hideAllSections();
-              document.getElementById('groupDetails').style.display = 'block';
-                
-              document.getElementById('groupDetailsName').textContent = group.name;
-              document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
-              document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
-
-            const isOwner = group.ownerId === parseInt(currentUser.id);
+    currentGroupId = groupId;
+    currentGroupOwnerIdCache = null; // reset cache on new group
+ 
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+ 
+    fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { alert('Failed to load group.'); return; }
+ 
+            const group = data.groups.find(g => g.id === groupId);
+            if (!group) { alert('Group not found!'); return; }
+ 
+            // Cache owner ID so displayScheduleResults doesn't need to re-fetch
+            currentGroupOwnerIdCache = group.ownerId;
+ 
+            hideAllSections();
+            document.getElementById('groupDetails').style.display = 'block';
+ 
+            document.getElementById('groupDetailsName').textContent = group.name;
+            document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
+            document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
+ 
+            const isOwner = Number(currentUser.id) === Number(group.ownerId);
             const locationSection = document.querySelector('.location-section');
             const locationInput = document.getElementById('meetingLocation');
             const locationButton = locationSection.querySelector('button');
             const locationLabel = locationSection.querySelector('label');
-
+ 
             if (isOwner) {
-                    locationInput.disabled = false;
-                    locationButton.style.display = 'inline-block';
-                    locationLabel.innerHTML = '📍 Meeting Location <span style="color: #10B981; font-size: 12px; font-weight: normal;">(You are the owner)</span>';
-                } else {
-                    locationInput.disabled = true;
-                    locationButton.style.display = 'none';
-                    locationLabel.innerHTML = '📍 Meeting Location <span style="color: #6B7280; font-size: 12px; font-weight: normal;">(View Only - only owner can edit)</span>';
-                }
-              generateAvailabilityGrid();
-                
-              loadAvailability(groupId);
+                locationInput.disabled = false;
+                locationButton.style.display = 'inline-block';
+                locationLabel.innerHTML = '📍 Meeting Location <span style="color:#10B981;font-size:12px;font-weight:normal;">(You are the owner)</span>';
+            } else {
+                locationInput.disabled = true;
+                locationButton.style.display = 'none';
+                locationLabel.innerHTML = '📍 Meeting Location <span style="color:#6B7280;font-size:12px;font-weight:normal;">(View Only — only the owner can edit)</span>';
+            }
+ 
+            generateAvailabilityGrid();
+            loadAvailability(groupId);
             loadMeetingLocation();
             loadGroupMeetings();
             offerToApplyPreferences(groupId);
-          }
-      })
-        .catch(error => {
-            console.error('View group error:', error);
-            alert('Failed to load group details');
-        });
+        })
+        .catch(() => alert('Network error loading group. Please try again.'));
 }
 
 function backToDashboard() {
   hideAllSections();
   document.getElementById('dashboard').style.display = 'block';
   selectedSlots.clear();
+  currentGroupOwnerIdCache = null;
 }
+
+
 let isDragging = false;
 let dragMode = null;
 
@@ -218,6 +215,7 @@ function selectAllAvailability() {
 }
 
 let isSaving = false;
+let isScheduling = false;
 
 function saveAvailability() {
     if (isSaving) return;
@@ -225,12 +223,14 @@ function saveAvailability() {
         alert('Please select at least one time slot!');
         return;
     }
+
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+  
     isSaving = true;
     const btn = document.querySelector('.availability-actions .btn-primary');
-    btn.disabled = true;
-    btn.textContent = '⏳ Saving...';
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
 
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     fetch(`${API_URL}/api/availability`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -270,7 +270,8 @@ function clearAvailability() {
 }
 
 function loadAvailability(groupId) {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
     
     fetch(`${API_URL}/api/availability/${groupId}`)
         .then(response => response.json())
@@ -301,7 +302,8 @@ function loadAvailability(groupId) {
 function showAvailabilityStatus(availability) {
     const statusDiv = document.getElementById('availabilityStatus');
     
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
     
     fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
         .then(response => response.json())
@@ -333,14 +335,11 @@ function showAvailabilityStatus(availability) {
         });
 }
                                                       
-let isScheduling = false;
-
 function findMeetingTimes() {
     if (isScheduling) return; // prevent double-click
     isScheduling = true;
     const btn = document.querySelector('.schedule-section .btn-create');
-    btn.disabled = true;
-    btn.textContent = '⏳ Finding times...';
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Finding times...'; }
 
     fetch(`${API_URL}/api/schedule/${currentGroupId}`)
         .then(response => response.json())
@@ -357,83 +356,101 @@ function findMeetingTimes() {
         })
         .finally(() => {
             isScheduling = false;
-            btn.disabled = false;
-            btn.textContent = 'Find Optimal Meeting Times';
+            if (btn) { btn.disabled = false; btn.textContent = 'Find Optimal Meeting Times'; }
         });
 }
 
 function displayScheduleResults(optimalTimes) {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    
-    // check if user is the group owner
-    fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+ 
+    const resultsDiv = document.getElementById('scheduleResults');
+    const timesDiv = document.getElementById('recommendedTimes');
+ 
+    if (optimalTimes.length === 0) {
+        timesDiv.innerHTML = '<p>No times found where members overlap. Try selecting more availability!</p>';
+        resultsDiv.style.display = 'block';
+        return;
+    }
+ 
+    // Use cached owner ID, avoids a second API call on every schedule result
+    const isOwner = currentGroupOwnerIdCache !== null
+        ? Number(currentUser.id) === Number(currentGroupOwnerIdCache)
+        : false;
+ 
+    let html = '';
+    optimalTimes.forEach(function(option, index) {
+        let travelInfoHtml = '';
+        if (option.travel_info && Object.keys(option.travel_info).length > 0) {
+            travelInfoHtml = '<div class="travel-info"><p><strong>🚗 Travel Times & Departure Schedule:</strong></p>';
+            for (const email in option.travel_info) {
+                const travel = option.travel_info[email];
+                const memberName = email.split('@')[0];
+                let trafficIcon = '🟢';
+                let trafficText = 'Light traffic';
+                if (travel.duration_minutes > 45) { trafficIcon = '🔴'; trafficText = 'Heavy traffic'; }
+                else if (travel.duration_minutes > 25) { trafficIcon = '🟡'; trafficText = 'Moderate traffic'; }
+                travelInfoHtml += `
+                    <div class="travel-timeline">
+                        <div class="travel-member-name">${memberName}</div>
+                        <div class="timeline-row">
+                            <span class="timeline-step departure">🏠 Leave: <strong>${travel.departure_time}</strong></span>
+                            <span class="timeline-arrow">→</span>
+                            <span class="timeline-step travel">${trafficIcon} ${travel.duration_text} <small>(${trafficText})</small></span>
+                            <span class="timeline-arrow">→</span>
+                            <span class="timeline-step arrival">📍 Arrive: <strong>${travel.arrival_time}</strong></span>
+                        </div>
+                    </div>`;
+            }
+            travelInfoHtml += '</div>';
+        }
+ 
+        html += `<div class="time-option">
+            <h3>Option ${index + 1}: ${option.day} at ${option.time}</h3>
+            <p><span class="time-option-score">${option.score}% Match</span> ${option.available_count} of ${option.total_members} members available</p>
+            <p><strong>Available members:</strong></p>
+            <div class="available-members">${option.members.map(m => `<span class="member-badge">${m.split('@')[0]}</span>`).join('')}</div>
+            ${travelInfoHtml}`;
+ 
+        if (isOwner) {
+            html += `<div style="margin-top:15px;">
+                <button class="btn-schedule-meeting" onclick="scheduleMeeting('${option.day}', '${option.time}')">📅 Schedule This Meeting</button>
+            </div>`;
+        } else {
+            html += `<p style="margin-top:15px;color:#6B7280;font-size:0.9rem;">⚠️ Only the group owner can schedule meetings.</p>`;
+        }
+        html += '</div>';
+    });
+ 
+    timesDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function importGoogleCalendar() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) { alert('Please login first!'); return; }
+ 
+    const importBtn = document.getElementById('importCalendarBtn');
+    importBtn.disabled = true;
+    importBtn.textContent = '🔄 Connecting...';
+ 
+    fetch(`${API_URL}/api/oauth/status/${currentUser.id}`)
         .then(r => r.json())
         .then(data => {
-            const group = data.groups.find(g => g.id === currentGroupId);
-            const isOwner = group && group.ownerId === parseInt(currentUser.id);
-
-            const resultsDiv = document.getElementById('scheduleResults');
-            const timesDiv = document.getElementById('recommendedTimes');
-
-            if (optimalTimes.length === 0) {
-                timesDiv.innerHTML = '<p>No times found. Try selecting more availability!</p>';
-                resultsDiv.style.display = 'block';
-                return;
+            if (data.success && data.google_connected) {
+                importCalendarEvents();
+            } else {
+                startOAuthFlow(currentUser.id, importBtn);
             }
-
-            let html = '';
-            optimalTimes.forEach(function(option, index) {
-                let travelInfoHtml = '';
-                if (option.travel_info && Object.keys(option.travel_info).length > 0) {
-                    travelInfoHtml = '<div class="travel-info">';
-                    travelInfoHtml += '<p><strong>🚗 Travel Times & Departure Schedule:</strong></p>';
-                    for (const email in option.travel_info) {
-                        const travel = option.travel_info[email];
-                        const memberName = email.split('@')[0];
-                        let trafficIcon = '🟢';
-                        let trafficText = 'Light traffic';
-                        if (travel.duration_minutes > 45) { trafficIcon = '🔴'; trafficText = 'Heavy traffic'; }
-                        else if (travel.duration_minutes > 25) { trafficIcon = '🟡'; trafficText = 'Moderate traffic'; }
-                        travelInfoHtml += '<div class="travel-timeline">';
-                        travelInfoHtml += '<div class="travel-member-name">' + memberName + '</div>';
-                        travelInfoHtml += '<div class="timeline-row">';
-                        travelInfoHtml += '<span class="timeline-step departure">🏠 Leave: <strong>' + travel.departure_time + '</strong></span>';
-                        travelInfoHtml += '<span class="timeline-arrow">→</span>';
-                        travelInfoHtml += '<span class="timeline-step travel">' + trafficIcon + ' ' + travel.duration_text + ' <small>(' + trafficText + ')</small></span>';
-                        travelInfoHtml += '<span class="timeline-arrow">→</span>';
-                        travelInfoHtml += '<span class="timeline-step arrival">📍 Arrive: <strong>' + travel.arrival_time + '</strong></span>';
-                        travelInfoHtml += '</div></div>';
-                    }
-                    travelInfoHtml += '</div>';
-                }
-
-                html += '<div class="time-option">';
-                html += '<h3>Option ' + (index + 1) + ': ' + option.day + ' at ' + option.time + '</h3>';
-                html += '<p><span class="time-option-score">' + option.score + '% Match</span> ';
-                html += option.available_count + ' of ' + option.total_members + ' members available</p>';
-                html += '<p><strong>Available members:</strong></p>';
-                html += '<div class="available-members">';
-                option.members.forEach(m => html += '<span class="member-badge">' + m.split('@')[0] + '</span>');
-                html += '</div>';
-                html += travelInfoHtml;
-
-                // ← Only show schedule button to owner
-                if (isOwner) {
-                    html += '<div style="margin-top: 15px;">';
-                    html += '<button class="btn-schedule-meeting" onclick="scheduleMeeting(\'' + option.day + '\', \'' + option.time + '\')">📅 Schedule This Meeting</button>';
-                    html += '</div>';
-                } else {
-                    html += '<p style="margin-top:15px; color:#6B7280; font-size:0.9rem;">⚠️ Only the group owner can schedule meetings.</p>';
-                }
-
-                html += '</div>';
-            });
-
-            timesDiv.innerHTML = html;
-            resultsDiv.style.display = 'block';
-            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        })
+        .catch(() => {
+            importBtn.disabled = false;
+            importBtn.textContent = '📅 Import from Google Calendar';
+            alert('Network error. Please try again.');
         });
 }
+
 function checkTrafficAlerts(optimalTimes) {
     let alerts = [];
     
@@ -453,141 +470,85 @@ function checkTrafficAlerts(optimalTimes) {
     }
     return '';
 }
-function importGoogleCalendar() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    
-    if (!currentUser) {
-        alert('Please login first!');
-        return;
-    }
-    
-    // Show loading
-    const importBtn = document.getElementById('importCalendarBtn');
-    importBtn.disabled = true;
-    importBtn.textContent = '🔄 Connecting...';
-
-  fetch(`${API_URL}/api/oauth/status/${currentUser.id}`)
-  .then(response => response.json())
-  .then(data => {
-    if (data.success && data.google_connected) {
-      importCalendarEvents();
-    } else {
-      startOAuthFlow(currentUser.id, importBtn);
-    }
-  })
-  .catch(error => { 
-    console.error('OAuth status check error:', error);
-    importBtn.disabled = false;
-    importBtn.textContent = '📅 Import from Google Calendar';
-  });
-}
 
 function startOAuthFlow(userId, importBtn) {
-  importBtn.textContent = '🔄 Connecting...';
-  
-    // Initiate OAuth flow
-    fetch(`${API_URL}/api/oauth/google/initiate?user_id=${userId}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Open OAuth popup
-            const popup = window.open(
-                data.authorization_url,
-                'Google Calendar Authorization',
-                'width=600,height=700'
-            );
-            
-            // Listen for OAuth success message
-            window.addEventListener('message', function(event) {
-                if (event.data.type === 'oauth_success' && event.data.provider === 'google') {
-                    importBtn.textContent = '📅 Import from Google Calendar';
-                    importBtn.disabled = false;
-                    
-                    // Now import calendar events
-                    importCalendarEvents();
-                }
-            });
-        } else {
-            alert('Failed to initiate calendar connection');
+    importBtn.textContent = '🔄 Connecting...';
+    fetch(`${API_URL}/api/oauth/google/initiate?user_id=${userId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.open(data.authorization_url, 'Google Calendar Authorization', 'width=600,height=700');
+                window.addEventListener('message', function handler(event) {
+                    if (event.data.type === 'oauth_success' && event.data.provider === 'google') {
+                        window.removeEventListener('message', handler);
+                        importBtn.textContent = '📅 Import from Google Calendar';
+                        importBtn.disabled = false;
+                        importCalendarEvents();
+                    }
+                });
+            } else {
+                alert('Failed to initiate calendar connection');
+                importBtn.disabled = false;
+                importBtn.textContent = '📅 Import from Google Calendar';
+            }
+        })
+        .catch(() => {
+            alert('Network error. Please try again.');
             importBtn.disabled = false;
             importBtn.textContent = '📅 Import from Google Calendar';
-        }
-    })
-    .catch(error => {
-        console.error('OAuth initiate error:', error);
-        alert('Network error. Please try again.');
-        importBtn.disabled = false;
-        importBtn.textContent = '📅 Import from Google Calendar';
-    });
+        });
 }
+
 function importCalendarEvents() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    
-    // Calculate current week
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+ 
     const today = new Date();
     const dayOfWeek = today.getDay();
-
     const monday = new Date(today);
-    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  monday.setDate(today.getDate() + daysToMonday);
-  monday.setHours(0,0,0,0);
-
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
-  
+    monday.setDate(today.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+ 
     const importBtn = document.getElementById('importCalendarBtn');
     importBtn.textContent = '⏳ Importing this week...';
-    
-    // Call import endpoint
+ 
     fetch(`${API_URL}/api/calendar/import/${currentGroupId}`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             user_id: currentUser.id,
             start_date: monday.toISOString(),
             end_date: sunday.toISOString()
         })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
         if (data.success) {
-          const weekStr = `${monday.toLocaleDateString()} - ${sunday.toLocaleDateString()}`;
-            alert(`✅ Success! Imported this week (${weekStr})\n${data.slots_count} available time slots found!`);
-            
-            // Reload availability to show imported data
+            const weekStr = `${monday.toLocaleDateString()} - ${sunday.toLocaleDateString()}`;
+            alert(`✅ Imported this week (${weekStr})\n${data.slots_count} available slots found!`);
             loadAvailability(currentGroupId);
-            
             importBtn.textContent = '✅ Imported!';
-            setTimeout(() => {
-                importBtn.textContent = '📅 Import from Google Calendar';
-            }, 3000);
+            setTimeout(() => { importBtn.textContent = '📅 Import from Google Calendar'; }, 3000);
         } else {
             alert('Failed to import calendar: ' + (data.error || 'Unknown error'));
             importBtn.textContent = '📅 Import from Google Calendar';
         }
     })
-    .catch(error => {
-        console.error('Calendar import error:', error);
+    .catch(() => {
         alert('Network error. Please try again.');
         importBtn.textContent = '📅 Import from Google Calendar';
+    })
+    .finally(() => {
+        importBtn.disabled = false;
     });
 }
 
 function openLocationSettings() {
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-  if (!currentUser) {
-    alert('Please log in first!');
-    return;
-  }
+  const currentUser = getCurrentUser();
+  if (!currentUser) { openLoginModal(); return; }
 
   loadUserLocations(currentUser.id);
 
@@ -651,7 +612,8 @@ function displaySavedLocations(locations) {
 }
 
 function saveLocation(locationType) {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
     
     const address = locationType === 'home' 
         ? document.getElementById('homeAddress').value.trim()
@@ -709,7 +671,9 @@ function loadMeetingLocation() {
 }
 
 function saveMeetingLocation() {
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  const currentUser = getCurrentUser();
+  if (!currentUser) { openLoginModal(); return; }
+  
     const location = document.getElementById('meetingLocation').value.trim();
     
     if (!location) {
@@ -744,13 +708,9 @@ function saveMeetingLocation() {
 }
 
 function scheduleMeeting(dayOfWeek, meetingTime) {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    
-    if (!currentUser) {
-        alert('Please log in to schedule meetings');
-        return;
-    }
-    
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+  
     // Calculate next occurrence of this day
     const today = new Date();
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -819,55 +779,59 @@ function loadGroupMeetings() {
 
 function displayGroupMeetings(meetings) {
     const container = document.getElementById('scheduledMeetings');
-    
+    const currentUser = getCurrentUser();
+    const isOwner = currentGroupOwnerIdCache !== null
+        ? Number(currentUser?.id) === Number(currentGroupOwnerIdCache)
+        : false;
+ 
     if (meetings.length === 0) {
-        container.innerHTML = '<p style="color: #666;">No meetings scheduled yet.</p>';
+        container.innerHTML = '<p style="color:#666;">No meetings scheduled yet.</p>';
         return;
     }
-    
+ 
     let html = '';
-    
     meetings.forEach(function(meeting) {
-        // Format date nicely
         const date = new Date(meeting.meeting_date);
-        const formattedDate = date.toLocaleDateString('en-GB', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+        const formattedDate = date.toLocaleDateString('en-GB', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
-        
-        html += '<div class="meeting-card">';
-        html += '<div class="meeting-date">📅 ' + meeting.day_of_week + ', ' + meeting.meeting_time + '</div>';
-        html += '<p><strong>Date:</strong> ' + formattedDate + '</p>';
-        html += '<p><strong>Location:</strong> ' + (meeting.location || 'TBD') + '</p>';
-        html += '<p><strong>Scheduled by:</strong> ' + meeting.created_by_name + '</p>';
-        html += '<button class="btn-delete-meeting" onclick="deleteMeeting(' + meeting.id + ')">🗑️ Cancel Meeting</button>';
+        // Flag past meetings
+        const isPast = date < new Date();
+        const pastBadge = isPast ? '<span style="background:#9CA3AF;color:white;padding:2px 8px;border-radius:4px;font-size:11px;margin-left:8px;">Past</span>' : '';
+ 
+        html += `<div class="meeting-card" style="${isPast ? 'opacity:0.7;' : ''}">
+            <div class="meeting-date">📅 ${meeting.day_of_week}, ${meeting.meeting_time}${pastBadge}</div>
+            <p><strong>Date:</strong> ${formattedDate}</p>
+            <p><strong>Location:</strong> ${meeting.location || 'TBD'}</p>
+            <p><strong>Scheduled by:</strong> ${meeting.created_by_name}</p>`;
+ 
+        // Only owner can cancel meetings
+        if (isOwner) {
+            html += `<button class="btn-delete-meeting" onclick="deleteMeeting(${meeting.id})">🗑️ Cancel Meeting</button>`;
+        }
         html += '</div>';
     });
-    
     container.innerHTML = html;
 }
 
 function deleteMeeting(meetingId) {
-    if (!confirm('Are you sure you want to cancel this meeting?')) {
-        return;
-    }
-    
+    if (!confirm('Are you sure you want to cancel this meeting?')) return;
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+ 
     fetch(`${API_URL}/api/meetings/${meetingId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: parseInt(currentUser.id) })
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
         if (data.success) {
             alert('Meeting cancelled');
-            loadGroupMeetings(); // Refresh the list
+            loadGroupMeetings();
         } else {
-            alert('Failed to cancel meeting');
+            alert('Failed to cancel meeting: ' + (data.error || 'Unknown error'));
         }
     })
-    .catch(error => {
-        console.error('Delete meeting error:', error);
-        alert('Network error');
-    });
+    .catch(() => alert('Network error. Please try again.'));
 }
