@@ -1,60 +1,65 @@
 let tempMembers = [];
-let activeGroup = null;
 
 function createGroup(event) {
   event.preventDefault();
 
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  const groupName = document.getElementById('groupName').value;
-  const groupDescription = document.getElementById('groupDescription').value;
-
+  const currentUser = getCurrentUser();
+  if (!currentUser) { openLoginModal(); return; }
+  
+  const groupName = document.getElementById('groupName').value.trim();
+  const groupDescription = document.getElementById('groupDescription').value.trim();
+  
   const errorDiv = document.getElementById('createGroupError');
   const successDiv = document.getElementById('createGroupSuccess');
 
   errorDiv.textContent = '';
   successDiv.textContent = '';
 
+  if (groupName.length < 2) {
+    errorDiv.textContent = 'Group name must be at least 2 characters!';
+    return;
+  }
+
   fetch(`${API_URL}/api/groups`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            name: groupName,
-            description: groupDescription,
-            owner_id: currentUser.id,
-            members: tempMembers
-        })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+          name: groupName,
+          description: groupDescription,
+          owner_id: currentUser.id,
+          members: tempMembers
+      })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            successDiv.textContent = 'Group created successfully!';
-            tempMembers = [];
+          let message = 'Group created successfully!';
+          if (data.skipped_emails && data.skipped_emails.length > 0) {
+            msg += ` Note: ${data.skipped_emails.join(', ')} could not be added (account not found).`;
+          }
+          successDiv.textContent = msg;
+          tempMembers = [];
 
           const newGroupId = data.group_id;
             setTimeout(() => {
                 closeCreateGroupModal();
-
-              fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
-              .then(response => response.json())
-              .then(groupsData => {
-                if (groupsData.success) {
-                  displayGroups(groupsData.groups);
-
-                  viewGroup(newGroupId);
-                }
-              });
-            }, 1000);
+              
+                fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+                    .then(response => response.json())
+                    .then(groupsData => {
+                        if (groupsData.success) {
+                            displayGroups(groupsData.groups);
+                            viewGroup(newGroupId);
+                        }
+                    });
+            }, 1500);
         } else {
             errorDiv.textContent = data.error || 'Failed to create group';
         }
     })
     .catch(error => {
-        console.error('Create group error:', error);
         errorDiv.textContent = 'Network error. Please try again.';
     });
-  
 }
 
 function addMember() {
@@ -65,8 +70,8 @@ function addMember() {
     return;
   }
   
-  if (!memberEmail.includes('@')) {
-    alert('Please enter a valid email address.')
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(memberEmail)) {
+    alert('Please enter a valid email address.');
     return;
   }
   
@@ -101,63 +106,62 @@ function renderMembersList() {
 }
 
 function loadGroups() {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+ 
     const groupsGrid = document.getElementById('groupsGrid');
-    
     groupsGrid.innerHTML = '<p>Loading groups...</p>';
-    
+ 
     fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             if (data.success) {
-                const groups = data.groups;
-                
-                if (groups.length === 0) {
-                    groupsGrid.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-icon"> X </div>
-                            <h3>No study groups yet</h3>
-                            <p>Create your first group to get started!</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                groupsGrid.innerHTML = '';
-                groups.forEach(group => {
-                    const groupCard = document.createElement('div');
-                    groupCard.className = 'group-card';
-                    groupCard.onclick = () => viewGroup(group.id);
-                    
-                    const membersHtml = group.members.slice(0, 3).map(email =>
-                        `<span class="member-badge">${email.split('@')[0]}</span>`
-                    ).join('');
-                    
-                    const moreMembers = group.members.length > 3 ?
-                        `<span class="member-badge">+${group.members.length - 3} more</span>` : '';
-                    
-                    groupCard.innerHTML = `
-                        <h3>${group.name}</h3>
-                        <p>${group.description || 'No description'}</p>
-                        <p><strong>Created by:</strong> ${group.ownerName}</p>
-                        <div class="group-members">
-                            ${membersHtml}
-                            ${moreMembers}
-                        </div>
-                    `;
-                    
-                    groupsGrid.appendChild(groupCard);
-                });
+                displayGroups(data.groups);
             } else {
-                groupsGrid.innerHTML = '<p>Failed to load groups</p>';
+                groupsGrid.innerHTML = '<p style="color:#EF4444;">Failed to load groups. Please refresh.</p>';
             }
         })
-        .catch(error => {
-            console.error('Load groups error:', error);
-            groupsGrid.innerHTML = '<p>Network error. Please try again.</p>';
+        .catch(() => {
+            groupsGrid.innerHTML = '<p style="color:#EF4444;">Network error. Please check your connection and refresh.</p>';
         });
 }
 
+function displayGroups(groups) {
+    const groupsGrid = document.getElementById('groupsGrid');
+ 
+    if (groups.length === 0) {
+        groupsGrid.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <h3>No study groups yet</h3>
+                <p>Create your first group to get started!</p>
+                <button class="btn-primary" style="margin-top:1rem;" onclick="openCreateGroupModal()">Create a Group</button>
+            </div>
+        `;
+        return;
+    }
+ 
+    groupsGrid.innerHTML = '';
+    groups.forEach(group => {
+        const groupCard = document.createElement('div');
+        groupCard.className = 'group-card';
+        groupCard.onclick = () => viewGroup(group.id);
+ 
+        const membersHtml = group.members.slice(0, 3).map(email =>
+            `<span class="member-badge">${email.split('@')[0]}</span>`
+        ).join('');
+        const moreMembers = group.members.length > 3
+            ? `<span class="member-badge">+${group.members.length - 3} more</span>` : '';
+ 
+        groupCard.innerHTML = `
+            <h3>${group.name}</h3>
+            <p>${group.description || 'No description'}</p>
+            <p><strong>Created by:</strong> ${group.ownerName}</p>
+            <div class="group-members">${membersHtml}${moreMembers}</div>
+        `;
+        groupsGrid.appendChild(groupCard);
+    });
+}
 
 function openCreateGroupModal() {
   tempMembers = []; // Reset temporary members
