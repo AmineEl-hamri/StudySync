@@ -170,4 +170,3 @@ function switchToLogin() {
     closeRegisterModal();
     openLoginModal();
 }
-          }
