@@ -1995,3 +1995,61 @@ body {
 .availability-table .time-slot {
     touch-action: none;  /* prevents scrolling on mobile while selecting timeslots */
 }
+
+#prefToast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-left: 4px solid #4F46E5;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    z-index: 9999;
+    max-width: 320px;
+    display: none;
+    animation: slideIn 0.3s ease;
+}
+
+#prefToast h4 {
+    margin: 0 0 0.4rem 0;
+    font-size: 0.95rem;
+    color: #1F2937;
+}
+
+#prefToast p {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.82rem;
+    color: #6B7280;
+}
+
+#prefToast .toast-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#prefToast .toast-buttons button {
+    flex: 1;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+#prefToast .toast-btn-apply {
+    background: #4F46E5;
+    color: white;
+}
+
+#prefToast .toast-btn-dismiss {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
