@@ -1,9 +1,6 @@
 
 const API_URL = 'https://studysync-backend-195370304491.europe-west2.run.app';
 
-window.onload = function() {
-          checkLoginStatus();
-}
 function checkLoginStatus() {
           const currentUser = localStorage.getItem('currentUser');
                if (currentUser) {
