@@ -68,6 +68,10 @@ function updateProfile() {
     const successEl = document.getElementById('profileUpdateSuccess');
     const errorEl = document.getElementById('profileUpdateError');
 
+    if (!currentUser) { 
+        openLoginModal();
+        return;
+    } 
     if (!name || !email) {
         errorEl.textContent = 'Please fill in all fields.';
         return;
