@@ -215,6 +215,8 @@ function applyPreferencesToGroup() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     if (!currentUser || !pendingGroupIdForPrefs) return;
 
+    const groupId = pendingGroupIdForPrefs;
+
     fetch(`${API_URL}/api/users/${currentUser.id}/preferences`)
         .then(r => r.json())
         .then(data => {
@@ -223,7 +225,7 @@ function applyPreferencesToGroup() {
             const blockedSlots = getSlotsBlockedByPreferences(data.preferences);
 
             // Get current availability and remove blocked slots
-            fetch(`${API_URL}/api/availability/${pendingGroupIdForPrefs}`)
+            fetch(`${API_URL}/api/availability/${groupId}`)
                 .then(r => r.json())
                 .then(avData => {
                     let currentSlots = new Set();
@@ -239,7 +241,7 @@ function applyPreferencesToGroup() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            group_id: pendingGroupIdForPrefs,
+                            group_id: groupId,
                             user_id: currentUser.id,
                             slots: Array.from(currentSlots)
                         })
@@ -251,7 +253,7 @@ function applyPreferencesToGroup() {
                             // Reload availability grid
                             selectedSlots = currentSlots;
                             generateAvailabilityGrid();
-                            loadAvailability(pendingGroupIdForPrefs);
+                            loadAvailability(groupId);
                             alert('✅ Preferences applied! Blocked times have been removed from your availability.');
                         }
                     });
