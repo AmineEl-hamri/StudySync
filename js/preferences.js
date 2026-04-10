@@ -202,7 +202,7 @@ function offerToApplyPreferences(groupId) {
             }
 
             document.getElementById('prefPreviewList').innerHTML = preview;
-            document.getElementById('applyPreferencesModal').classList.add('active');
+            document.getElementById('prefToastl').style.display = 'block';
         });
 }
 
