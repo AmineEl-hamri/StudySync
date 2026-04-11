@@ -386,6 +386,10 @@ function displayScheduleResults(optimalTimes) {
             for (const email in option.travel_info) {
                 const travel = option.travel_info[email];
                 const memberName = email.split('@')[0];
+                const unavailableMembers = option.members_all
+                    ? option.members_all.filter(m => !option.members.includes(m))
+                    : [];
+                
                 let trafficIcon = '🟢';
                 let trafficText = 'Light traffic';
                 if (travel.duration_minutes > 45) { trafficIcon = '🔴'; trafficText = 'Heavy traffic'; }
@@ -411,6 +415,13 @@ function displayScheduleResults(optimalTimes) {
             <p><strong>Available members:</strong></p>
             <div class="available-members">${option.members.map(m => `<span class="member-badge">${m.split('@')[0]}</span>`).join('')}</div>
             ${travelInfoHtml}`;
+        
+        if (unavailableMembers.length > 0) {
+            html += '<p style="margin-top:0.5rem;"><strong>Unavailable:</strong></p>';
+            html += '<div class="available-members">';
+            unavailableMembers.forEach(m => html += `<span class="member-badge unavailable-badge">✗ ${m.split('@')[0]}</span>`);
+            html += '</div>';
+        }
  
         if (isOwner) {
             html += `<div style="margin-top:15px;">
