@@ -179,7 +179,7 @@
                saveAvailability() posts to POST /api/availability -->
                <div class="availability-section">
                     <h2>Set Your Availability</h2>
-                    <p>Click on time slots when you're available to meet</p>
+                    <p>Click the times when you're <strong>free to meet</strong>, green means available. Click a day header to select the whole day, or a time label to select that row.</p>
                     
                     <!-- Google Calendar import, triggers OAuth if not already connected. -->
                     <div class="import-section">
@@ -196,6 +196,9 @@
                     </div>
 
                     <!-- Availability grid table created here through generateAvailabilityGrid() -->
+                    <div class="grid-hint">
+                        💡 Tip: Click and drag across multiple slots to select them all at once. On mobile, touch and swipe works too.
+                    </div>
                     <div class="availability-grid" id="availabilityGrid">
                     </div>
 
