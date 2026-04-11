@@ -2138,3 +2138,16 @@ body {
     opacity: 0.75;
     border-left-color: #9CA3AF;
 }
+
+.group-availability-bar {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #F3F4F6;
+}
+
+.availability-pill {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
