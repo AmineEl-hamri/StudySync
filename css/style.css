@@ -2063,3 +2063,15 @@ body {
     color: #4338CA;
     margin-bottom: 1rem;
 }
+
+.available-badge {
+    background: #D1FAE5;
+    color: #065F46;
+    border: 1px solid #6EE7B7;
+}
+
+.unavailable-badge {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FCA5A5;
+}
