@@ -243,8 +243,8 @@ function saveAvailability() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Availability saved successfully!');
             loadAvailability(currentGroupId);
+            showSavedTimestamp();
         } else {
             alert('Failed to save availability: ' + (data.error || 'Unknown error'));
         }
@@ -258,6 +258,26 @@ function saveAvailability() {
         btn.disabled = false;
         btn.textContent = 'Save My Availability';
     });
+}
+
+function showSavedTimestamp() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+    let stamp = document.getElementById('availabilitySavedStamp');
+    if (!stamp) {
+        stamp = document.createElement('div');
+        stamp.id = 'availabilitySavedStamp';
+        stamp.className = 'saved-stamp';
+        const actions = document.querySelector('.availability-actions');
+        if (actions) actions.after(stamp);
+    }
+    stamp.innerHTML = `✅ Availability saved — ${dateStr} at ${timeStr}`;
+    stamp.style.opacity = '1';
+
+    // Fades out after 8 seconds but keeps the text
+    setTimeout(() => { stamp.style.opacity = '0.5'; }, 8000);
 }
 
 function clearAvailability() {
@@ -291,6 +311,18 @@ function loadAvailability(groupId) {
                 }
                 
                 showAvailabilityStatus(availability);
+                if (availability[currentUser.email] && availability[currentUser.email].slots.length > 0) {
+                    let stamp = document.getElementById('availabilitySavedStamp');
+                    if (!stamp) {
+                        stamp = document.createElement('div');
+                        stamp.id = 'availabilitySavedStamp';
+                        stamp.className = 'saved-stamp';
+                        const actions = document.querySelector('.availability-actions');
+                        if (actions) actions.after(stamp);
+                    }
+                    stamp.innerHTML = `📋 Availability previously saved, select slots and save to update`;
+                    stamp.style.opacity = '0.6';
+                }
             }
         })
         .catch(error => {
