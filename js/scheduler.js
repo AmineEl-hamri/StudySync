@@ -449,15 +449,16 @@ function displayScheduleResults(optimalTimes) {
  
     let html = '';
     optimalTimes.forEach(function(option, index) {
+
+        const allMemberEmails = option.members_all || [];
+        const unavailableMembers = allMemberEmails.filter(m => !option.members.includes(m));
+        
         let travelInfoHtml = '';
         if (option.travel_info && Object.keys(option.travel_info).length > 0) {
             travelInfoHtml = '<div class="travel-info"><p><strong>🚗 Travel Times & Departure Schedule:</strong></p>';
             for (const email in option.travel_info) {
                 const travel = option.travel_info[email];
                 const memberName = email.split('@')[0];
-                const unavailableMembers = option.members_all
-                    ? option.members_all.filter(m => !option.members.includes(m))
-                    : [];
                 
                 let trafficIcon = '🟢';
                 let trafficText = 'Light traffic';
