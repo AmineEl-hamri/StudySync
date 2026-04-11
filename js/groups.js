@@ -146,18 +146,36 @@ function displayGroups(groups) {
         const groupCard = document.createElement('div');
         groupCard.className = 'group-card';
         groupCard.onclick = () => viewGroup(group.id);
- 
+
         const membersHtml = group.members.slice(0, 3).map(email =>
             `<span class="member-badge">${email.split('@')[0]}</span>`
         ).join('');
         const moreMembers = group.members.length > 3
             ? `<span class="member-badge">+${group.members.length - 3} more</span>` : '';
- 
+
+        const totalMembers = group.members.length;
+        const submitted = group.submittedCount || 0;
+        const allSubmitted = submitted === totalMembers;
+        const noneSubmitted = submitted === 0;
+
+        const availabilityColour = allSubmitted ? '#065F46' : noneSubmitted ? '#9CA3AF' : '#92400E';
+        const availabilityBg = allSubmitted ? '#D1FAE5' : noneSubmitted ? '#F3F4F6' : '#FEF3C7';
+        const availabilityText = allSubmitted
+            ? `✓ All ${totalMembers} submitted`
+            : noneSubmitted
+            ? 'No availability yet'
+            : `${submitted} of ${totalMembers} submitted`;
+
         groupCard.innerHTML = `
             <h3>${group.name}</h3>
             <p>${group.description || 'No description'}</p>
             <p><strong>Created by:</strong> ${group.ownerName}</p>
             <div class="group-members">${membersHtml}${moreMembers}</div>
+            <div class="group-availability-bar">
+                <span class="availability-pill" style="background:${availabilityBg}; color:${availabilityColour};">
+                    📋 ${availabilityText}
+                </span>
+            </div>
         `;
         groupsGrid.appendChild(groupCard);
     });
