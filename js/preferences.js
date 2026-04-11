@@ -174,18 +174,20 @@ function getSlotsBlockedByPreferences(preferences) {
 }
 
 function offerToApplyPreferences(groupId) {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    const currentUser = getCurrentUser();
     if (!currentUser) return;
+
+    // Only offer once per user per group
+    const storageKey = `prefsOffered_${currentUser.id}_group_${groupId}`;
+    if (localStorage.getItem(storageKey)) return;
 
     fetch(`${API_URL}/api/users/${currentUser.id}/preferences`)
         .then(r => r.json())
         .then(data => {
             if (!data.success || !data.preferences || Object.keys(data.preferences).length === 0) return;
-
             const prefs = data.preferences;
             pendingGroupIdForPrefs = groupId;
 
-            
             let preview = '';
             if (prefs.work?.enabled) {
                 const days = prefs.work.days.map(d => DAYS[d]).join(', ');
@@ -200,10 +202,22 @@ function offerToApplyPreferences(groupId) {
                     preview += `<p>🚫 <strong>Blocked:</strong> ${DAYS[b.day]} ${b.start}–${b.end}</p>`;
                 });
             }
-
             document.getElementById('prefPreviewList').innerHTML = preview;
+
+            // Mark as offered now won't show again regardless of what user does
+            localStorage.setItem(storageKey, 'true');
             document.getElementById('prefToast').style.display = 'block';
         });
+}
+
+function dismissPrefsToast() {
+    document.getElementById('prefToast').style.display = 'none';
+    // Mark as offered for this group so it doesn't reappear
+    const currentUser = getCurrentUser();
+    if (currentUser && pendingGroupIdForPrefs) {
+        const storageKey = `prefsOffered_${currentUser.id}_group_${pendingGroupIdForPrefs}`;
+        localStorage.setItem(storageKey, 'true');
+    }
 }
 
 function closeApplyPreferencesModal() {
