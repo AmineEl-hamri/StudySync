@@ -323,10 +323,47 @@ function loadAvailability(groupId) {
                     stamp.innerHTML = `📋 Availability previously saved, select slots and save to update`;
                     stamp.style.opacity = '0.6';
                 }
+                updateFindTimesButton(availability);
             }
         })
         .catch(error => {
             console.error('Load availability error:', error);
+        });
+}
+
+function updateFindTimesButton(availability) {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const group = data.groups.find(g => g.id === currentGroupId);
+            if (!group) return;
+
+            const totalMembers = group.members.length;
+            const submittedCount = Object.keys(availability).length;
+            const btn = document.querySelector('.schedule-section .btn-create');
+            if (!btn) return;
+
+            if (submittedCount === 0) {
+                // Nobody has submitted yet
+                btn.textContent = 'Find Optimal Meeting Times';
+                btn.style.background = '';
+                btn.title = 'No members have submitted availability yet';
+            } else if (submittedCount < totalMembers) {
+                // Some but not all submitted
+                const missing = totalMembers - submittedCount;
+                btn.textContent = `Find Times (${submittedCount}/${totalMembers} ready)`;
+                btn.style.background = '#D97706'; // amber
+                btn.title = `${missing} member${missing > 1 ? 's have' : ' has'} not submitted availability yet — results may be incomplete`;
+            } else {
+                // Everyone submitted
+                btn.textContent = `Find Times (${submittedCount}/${totalMembers} ready ✓)`;
+                btn.style.background = '#059669'; // green
+                btn.title = 'All members have submitted — click to find the best times';
+            }
         });
 }
 
@@ -838,21 +875,38 @@ function displayGroupMeetings(meetings) {
         const formattedDate = date.toLocaleDateString('en-GB', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
-        // Flag past meetings
-        const isPast = date < new Date();
-        const pastBadge = isPast ? '<span style="background:#9CA3AF;color:white;padding:2px 8px;border-radius:4px;font-size:11px;margin-left:8px;">Past</span>' : '';
- 
-        html += `<div class="meeting-card" style="${isPast ? 'opacity:0.7;' : ''}">
-            <div class="meeting-date">📅 ${meeting.day_of_week}, ${meeting.meeting_time}${pastBadge}</div>
-            <p><strong>Date:</strong> ${formattedDate}</p>
-            <p><strong>Location:</strong> ${meeting.location || 'TBD'}</p>
-            <p><strong>Scheduled by:</strong> ${meeting.created_by_name}</p>`;
- 
-        // Only owner can cancel meetings
-        if (isOwner) {
-            html += `<button class="btn-delete-meeting" onclick="deleteMeeting(${meeting.id})">🗑️ Cancel Meeting</button>`;
+    
+        // Determine if meeting is in the past
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isPast = date < today;
+    
+        // Build status badges
+        let badges = '';
+        if (isPast) {
+            badges += '<span class="meeting-badge badge-past">Past</span>';
+        } else {
+            badges += '<span class="meeting-badge badge-upcoming">Upcoming</span>';
         }
-        html += '</div>';
+        if (meeting.email_sent) {
+            badges += '<span class="meeting-badge badge-notified">📧 Notified</span>';
+        }
+        if (!meeting.location) {
+            badges += '<span class="meeting-badge badge-warning">📍 No location set</span>';
+        }
+    
+        html += `
+            <div class="meeting-card ${isPast ? 'meeting-card-past' : ''}">
+                <div class="meeting-card-header">
+                    <div class="meeting-date">📅 ${meeting.day_of_week}, ${meeting.meeting_time}</div>
+                    <div class="meeting-badges">${badges}</div>
+                </div>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Location:</strong> ${meeting.location || '<em style="color:#9CA3AF;">Not set</em>'}</p>
+                <p><strong>Scheduled by:</strong> ${meeting.created_by_name}</p>
+                ${isOwner ? `<button class="btn-delete-meeting" onclick="deleteMeeting(${meeting.id})">🗑️ Cancel Meeting</button>` : ''}
+            </div>
+        `;
     });
     container.innerHTML = html;
 }
