@@ -71,6 +71,7 @@ function createGroup(event) {
         errorDiv.textContent = 'Request timed out, the group may have been created. Please refresh before trying again.';
       } else {
         errorDiv.textContent = 'Network error. Please refresh the page before trying again to avoid duplicates.';
+      }
     });
 }
 
