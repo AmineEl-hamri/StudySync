@@ -2086,3 +2086,55 @@ body {
     margin-top: 0.75rem;
     transition: opacity 1s ease;
 }
+
+.schedule-section .btn-create {
+    transition: background 0.3s ease;
+}
+
+.meeting-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.meeting-badges {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.meeting-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.badge-upcoming {
+    background: #D1FAE5;
+    color: #065F46;
+}
+
+.badge-past {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.badge-notified {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.badge-warning {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.meeting-card-past {
+    opacity: 0.75;
+    border-left-color: #9CA3AF;
+}
