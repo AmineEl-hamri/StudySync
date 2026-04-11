@@ -152,9 +152,14 @@ function deleteMeetingFromDashboard(meetingId) {
     if (!confirm('Are you sure you want to cancel this meeting?')) {
         return;
     }
+
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
     
     fetch(`${API_URL}/api/meetings/${meetingId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: parseInt(currentUser.id) })
     })
     .then(response => response.json())
     .then(data => {
