@@ -2075,3 +2075,14 @@ body {
     color: #991B1B;
     border: 1px solid #FCA5A5;
 }
+
+.saved-stamp {
+    font-size: 0.85rem;
+    color: #065F46;
+    background: #D1FAE5;
+    border-left: 3px solid #10B981;
+    padding: 0.5rem 1rem;
+    border-radius: 0 6px 6px 0;
+    margin-top: 0.75rem;
+    transition: opacity 1s ease;
+}
