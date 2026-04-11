@@ -20,17 +20,25 @@ function createGroup(event) {
     return;
   }
 
+  // Abort controller with a 15 second timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
   fetch(`${API_URL}/api/groups`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-          name: groupName,
-          description: groupDescription,
-          owner_id: currentUser.id,
-          members: tempMembers
-      })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        name: groupName,
+        description: groupDescription,
+        owner_id: currentUser.id,
+        members: tempMembers
+    }),
+    signal: controller.signal
+  })
+    .then(response => { 
+      clearTimeout(timeoutId);
+      return response.json();
     })
-    .then(response => response.json())
     .then(data => {
         if (data.success) {
           let message = 'Group created successfully!';
@@ -58,7 +66,11 @@ function createGroup(event) {
         }
     })
     .catch(error => {
-        errorDiv.textContent = 'Network error. Please try again.';
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        errorDiv.textContent = 'Request timed out, the group may have been created. Please refresh before trying again.';
+      } else {
+        errorDiv.textContent = 'Network error. Please refresh the page before trying again to avoid duplicates.';
     });
 }
 
