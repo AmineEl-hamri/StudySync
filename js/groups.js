@@ -34,6 +34,11 @@ async function createGroup(event) {
         errorDiv.textContent = 'Group name must be at least 2 characters!';
         return;
     }
+    
+    if (tempMembers.length === 0) {
+        errorDiv.textContent = 'Please add at least one other member to your group.';
+        return;
+    }
  
     // Disable button and show loading state while waiting
     const submitBtn = document.querySelector('#createGroupModal .btn-submit');
