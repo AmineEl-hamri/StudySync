@@ -142,6 +142,11 @@
 
                <!-- Returns user to the dashboard view. -->
                <button class="btn-back" onclick="backToDashboard()"> Back to Dashboard</button>
+               <div class="group-danger-actions">
+                    <!-- Allows the user or owner to leave or delete groups -->
+                  <button class="btn-leave-group" id="leaveGroupBtn" onclick="leaveGroup()" style="display:none;">🚪 Leave Group</button>
+                  <button class="btn-delete-group" id="deleteGroupBtn" onclick="deleteGroup()" style="display:none;">🗑️ Delete Group</button>
+              </div>
 
                <!-- Group metadata, filled in from viewGroup() in scheduler.js -->
                <div class="group-info">
