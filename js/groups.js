@@ -1,57 +1,70 @@
 let tempMembers = [];
 
-function createGroup(event) {
-  event.preventDefault();
+// Retries a fetch up to maxAttempts times with increasing delays
+// Handles Cloud Run cold starts which can take 5-10 seconds
+async function fetchWithRetry(url, options, maxAttempts = 5) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            return response;
+        } catch (err) {
+            if (attempt === maxAttempts) throw err;
+            const waitMs = attempt * 2000; // 2s, 4s, 6s, 8s
+            console.log(`Attempt ${attempt} failed, retrying in ${waitMs}ms...`);
+            await new Promise(resolve => setTimeout(resolve, waitMs));
+        }
+    }
+}
 
-  const currentUser = getCurrentUser();
-  if (!currentUser) { openLoginModal(); return; }
-  
-  const groupName = document.getElementById('groupName').value.trim();
-  const groupDescription = document.getElementById('groupDescription').value.trim();
-  
-  const errorDiv = document.getElementById('createGroupError');
-  const successDiv = document.getElementById('createGroupSuccess');
-
-  errorDiv.textContent = '';
-  successDiv.textContent = '';
-
-  if (groupName.length < 2) {
-    errorDiv.textContent = 'Group name must be at least 2 characters!';
-    return;
-  }
-
-  // Abort controller with a 15 second timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-  fetch(`${API_URL}/api/groups`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        name: groupName,
-        description: groupDescription,
-        owner_id: currentUser.id,
-        members: tempMembers
-    }),
-    signal: controller.signal
-  })
-    .then(response => { 
-      clearTimeout(timeoutId);
-      return response.json();
-    })
-    .then(data => {
+async function createGroup(event) {
+    event.preventDefault();
+ 
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+ 
+    const groupName = document.getElementById('groupName').value.trim();
+    const groupDescription = document.getElementById('groupDescription').value.trim();
+    const errorDiv = document.getElementById('createGroupError');
+    const successDiv = document.getElementById('createGroupSuccess');
+ 
+    errorDiv.textContent = '';
+    successDiv.textContent = '';
+ 
+    if (groupName.length < 2) {
+        errorDiv.textContent = 'Group name must be at least 2 characters!';
+        return;
+    }
+ 
+    // Disable button and show loading state while waiting
+    const submitBtn = document.querySelector('#createGroupModal .btn-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Creating...';
+ 
+    try {
+        const response = await fetchWithRetry(`${API_URL}/api/groups`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: groupName,
+                description: groupDescription,
+                owner_id: currentUser.id,
+                members: tempMembers
+            })
+        });
+ 
+        const data = await response.json();
+ 
         if (data.success) {
-          let message = 'Group created successfully!';
-          if (data.skipped_emails && data.skipped_emails.length > 0) {
-            msg += ` Note: ${data.skipped_emails.join(', ')} could not be added (account not found).`;
-          }
-          successDiv.textContent = msg;
-          tempMembers = [];
-
-          const newGroupId = data.group_id;
+            let message = 'Group created successfully!';
+            if (data.skipped_emails && data.skipped_emails.length > 0) {
+                message += ` Note: ${data.skipped_emails.join(', ')} could not be added (account not found).`;
+            }
+            successDiv.textContent = message;
+            tempMembers = [];
+ 
+            const newGroupId = data.group_id;
             setTimeout(() => {
                 closeCreateGroupModal();
-              
                 fetch(`${API_URL}/api/groups?user_id=${currentUser.id}`)
                     .then(response => response.json())
                     .then(groupsData => {
@@ -64,15 +77,12 @@ function createGroup(event) {
         } else {
             errorDiv.textContent = data.error || 'Failed to create group';
         }
-    })
-    .catch(error => {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        errorDiv.textContent = 'Request timed out, the group may have been created. Please refresh before trying again.';
-      } else {
-        errorDiv.textContent = 'Network error. Please refresh the page before trying again to avoid duplicates.';
-      }
-    });
+    } catch (err) {
+        errorDiv.textContent = 'Server is unavailable after several attempts. Please refresh and try again.';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Group';
+    }
 }
 
 function addMember() {
