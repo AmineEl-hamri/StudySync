@@ -35,15 +35,21 @@ function viewGroup(groupId) {
             const locationInput = document.getElementById('meetingLocation');
             const locationButton = locationSection.querySelector('button');
             const locationLabel = locationSection.querySelector('label');
+            const leaveBtn = document.getElementById('leaveGroupBtn');
+            const deleteBtn = document.getElementById('deleteGroupBtn');
  
             if (isOwner) {
                 locationInput.disabled = false;
                 locationButton.style.display = 'inline-block';
                 locationLabel.innerHTML = '📍 Meeting Location <span style="color:#10B981;font-size:12px;font-weight:normal;">(You are the owner)</span>';
+                deleteBtn.style.display = 'inline-block';
+                leaveBtn.style.display = 'none';
             } else {
                 locationInput.disabled = true;
                 locationButton.style.display = 'none';
-                locationLabel.innerHTML = '📍 Meeting Location <span style="color:#6B7280;font-size:12px;font-weight:normal;">(View Only — only the owner can edit)</span>';
+                locationLabel.innerHTML = '📍 Meeting Location <span style="color:#6B7280;font-size:12px;font-weight:normal;">(View Only, only the owner can edit)</span>';
+                leaveBtn.style.display = 'inline-block';
+                deleteBtn.style.display = 'none';
             }
  
             generateAvailabilityGrid();
@@ -929,6 +935,53 @@ function deleteMeeting(meetingId) {
             loadGroupMeetings();
         } else {
             alert('Failed to cancel meeting: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(() => alert('Network error. Please try again.'));
+}
+
+function leaveGroup() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+    if (!confirm('Are you sure you want to leave this group? Your availability data will be removed.')) return;
+
+    fetch(`${API_URL}/api/groups/${currentGroupId}/leave`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: parseInt(currentUser.id) })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('You have left the group.');
+            backToDashboard();
+            loadGroups();
+        } else {
+            alert(data.error || 'Failed to leave group');
+        }
+    })
+    .catch(() => alert('Network error. Please try again.'));
+}
+
+function deleteGroup() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+    if (!confirm('Are you sure you want to delete this group? All availability, meetings, and data will be permanently removed.')) return;
+    if (!confirm('Final warning, this cannot be undone. Delete the group?')) return;
+
+    fetch(`${API_URL}/api/groups/${currentGroupId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: parseInt(currentUser.id) })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Group deleted.');
+            backToDashboard();
+            loadGroups();
+        } else {
+            alert(data.error || 'Failed to delete group');
         }
     })
     .catch(() => alert('Network error. Please try again.'));
