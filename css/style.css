@@ -2161,3 +2161,49 @@ body {
     border-radius: 6px;
     display: inline-block;
 }
+
+.group-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.group-danger-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-leave-group {
+    background: #F59E0B;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-leave-group:hover {
+    background: #D97706;
+}
+
+.btn-delete-group {
+    background: #EF4444;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-delete-group:hover {
+    background: #DC2626;
+}
