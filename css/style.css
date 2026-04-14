@@ -127,6 +127,54 @@ body {
           gap: 1rem;
           justify-content: center;
      }
+.hero-features {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-feature {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    width: 170px;
+    text-align: center;
+    color: white;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.hero-feature:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.hero-feature-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.6rem;
+}
+
+.hero-feature p {
+    font-size: 0.82rem;
+    opacity: 0.92;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Stack to 2 columns on mobile */
+@media (max-width: 480px) {
+    .hero-feature {
+        width: calc(50% - 0.75rem);
+    }
+}
 
 .dashboard {
             display: none;
