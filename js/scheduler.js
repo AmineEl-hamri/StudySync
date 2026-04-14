@@ -53,6 +53,7 @@ function viewGroup(groupId) {
             }
  
             generateAvailabilityGrid();
+            setTimeout(() => initAutocomplete('meetingLocation'), 300);
             loadAvailability(groupId);
             loadMeetingLocation();
             loadGroupMeetings();
