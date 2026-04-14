@@ -1,5 +1,13 @@
+// auth.js: Authentication and session management.
+//  Handles login, register, logout, session persistence,
+//          user menu visibility, and modal open/close.
+// Depends on API_URL, getCurrentUser() is used throughout all other JS modules.
+
 const API_URL = 'https://studysync-backend-195370304491.europe-west2.run.app';
 
+//Safe localStorage parser, returns null and clears storage if the stored
+// value is corrupter rather than crashing.
+// Called  by every function that needs the logged-in user's data.
 function getCurrentUser() {
     try {
         const raw = localStorage.getItem('currentUser');
@@ -12,6 +20,9 @@ function getCurrentUser() {
     }
 }
 
+// Called by main.js window.onload on every page load.
+// Checks if the tutorial has been completed, if not it shows.
+// UI still loads normally during a Cloud Run cold start.
 function checkLoginStatus() {
     const currentUser = getCurrentUser();
     if (currentUser) {
@@ -21,7 +32,7 @@ function checkLoginStatus() {
             .then(r => r.json())
             .then(data => {
                 if (data.success && !data.user.tutorial_complete) {
-                    startTutorial();
+                    startTutorial(); // Defined in tutorial.js
                 }
             })
             .catch(() => {
@@ -31,6 +42,10 @@ function checkLoginStatus() {
     }
 }
 
+// Handles the register form submission.
+// Validates name, email, and password on the frontend before posting to 
+// POST /api/register. If successful, it stores the user object in localStorage, updates 
+// the navigation bar, and starts the onboarding tutorial for new users.
 function register(event) {
     event.preventDefault();
 
@@ -67,12 +82,13 @@ function register(event) {
     .then(data => {
         if (data.success) {
             successDiv.textContent = 'Account created successfully! Logging in...';
+            // Persist user to localStorage so session survives page refresh.
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             setTimeout(() => {
                 closeRegisterModal();
                 showUserMenu(data.user.name);
-                showDashboard();
-                startTutorial();
+                showDashboard(); // Defined in main.js
+                startTutorial(); // Defined in tutorial.js
             }, 1500);
         } else {
             errorDiv.textContent = data.error || 'Registration failed';
@@ -84,6 +100,10 @@ function register(event) {
     });
 }
 
+// Handles the login form submission.
+// Posts credentials to POST /api/login. The backend verifies the password
+// against the bcrypt hash. On success, stores the returned user object in localStorage
+// and restores the session.
 function login(event) {
     event.preventDefault();
     
@@ -108,7 +128,7 @@ function login(event) {
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             closeLoginModal();
             showUserMenu(data.user.name);
-            showDashboard();
+            showDashboard(); // Defined in main.js
         } else {
             errorDiv.textContent = data.error || 'Invalid credentials';
         }
@@ -119,6 +139,9 @@ function login(event) {
     });
 }
 
+// Clears the session from localStorage and reloads the page.
+// Reloading ensures all in-memory state is wiped and the UI returns 
+// cleanly to the logged-out state.
 function logout() {
     localStorage.removeItem('currentUser');
     document.getElementById('userMenu').style.display = 'none';
@@ -129,6 +152,9 @@ function logout() {
     location.reload();
 }
 
+// Shows the logged-in navi state, hides login/register buttons, shows
+// the username dropdown, dashboard, My Meetings, and My Locations links.
+// Called on login and on page load if a session exists in localStorage.
 function showUserMenu(userName) {                    
     document.getElementById('authButtons').style.display = 'none';
     document.getElementById('userMenu').style.display = 'block';
@@ -138,13 +164,15 @@ function showUserMenu(userName) {
     document.getElementById('locationSettingsBtn').style.display = 'block';
 }
 
+// Toggles the user dropdown menu (Dashboard, Profile, Logout).
 function toggleDropdown() {
     document.getElementById('dropdown').classList.toggle('active');
 }
 
+// Open/Close Modals
 function openLoginModal() {
     document.getElementById('loginModal').classList.add('active');
-    document.getElementById('loginError').textContent = '';
+    document.getElementById('loginError').textContent = ''; // Clears any previous errors.
 }
 
 function closeLoginModal() {
@@ -161,6 +189,7 @@ function closeRegisterModal() {
     document.getElementById('registerModal').classList.remove('active');
 }
 
+// Switch between modals without closing and reopening the backdrop.
 function switchToRegister() {
     closeLoginModal();
     openRegisterModal();
