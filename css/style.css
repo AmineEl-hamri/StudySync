@@ -111,22 +111,31 @@ body {
 }
      
 .hero h1 {
-          font-size: 3rem;
+          font-size: 3.5rem;
           margin-bottom: 1rem;
      }
      .highlight {
           color: #ffd89b;
      }
      .tagline {
-          font-size: 1.1rem;
-          margin-bottom: 2rem;
+          font-size: 1.3rem;
+          margin-bottom: 1rem;
           opacity: 0.9;
      }
-     .cta-buttons {
-          display: flex;
-          gap: 1rem;
-          justify-content: center;
-     }
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3rem;
+}
+.subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+    opacity: 0.85;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
 .hero-features {
     display: flex;
     gap: 1.5rem;
