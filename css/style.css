@@ -2269,3 +2269,35 @@ body {
 .btn-delete-group:hover {
     background: #DC2626;
 }
+
+.pac-container {
+    border-radius: 8px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    font-family: inherit;
+    margin-top: 4px;
+}
+
+.pac-item {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #374151;
+}
+
+.pac-item:hover {
+    background: #EEF2FF;
+}
+
+.pac-item-selected {
+    background: #EEF2FF;
+}
+
+.pac-icon {
+    display: none;
+}
+
+.pac-item-query {
+    font-weight: 600;
+    color: #4F46E5;
+}
