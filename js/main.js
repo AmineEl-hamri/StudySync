@@ -2,6 +2,12 @@ window.onload = function() {
     checkLoginStatus();
     setupEventListeners();
     showLoadingState(); 
+    // Initialise Places autocomplete after Google Maps script loads
+    setTimeout(() => {
+        initAutocomplete('homeAddress');
+        initAutocomplete('workAddress');
+        initAutocomplete('meetingLocation');
+    }, 1000);
 }
 
 function showLoadingState() {
@@ -341,4 +347,22 @@ function deleteAccount() {
         }
     })
     .catch(() => alert('Network error. Please try again.'));
+}
+
+function initAutocomplete(inputId, onSelect) {
+    const input = document.getElementById(inputId);
+    if (!input || typeof google === 'undefined') return;
+
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'gb' } // Currently restricted to UK
+    });
+
+    autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+        if (place.formatted_address) {
+            input.value = place.formatted_address;
+            if (onSelect) onSelect(place.formatted_address);
+        }
+    });
 }
