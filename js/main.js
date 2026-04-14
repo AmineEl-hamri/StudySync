@@ -349,20 +349,24 @@ function deleteAccount() {
     .catch(() => alert('Network error. Please try again.'));
 }
 
-function initAutocomplete(inputId, onSelect) {
+function initAutocomplete(inputId) {
     const input = document.getElementById(inputId);
     if (!input || typeof google === 'undefined') return;
 
-    const autocomplete = new google.maps.places.Autocomplete(input, {
+    const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
         types: ['geocode', 'establishment'],
-        componentRestrictions: { country: 'gb' } // Currently restricted to UK
+        componentRestrictions: { country: 'gb' }
     });
 
-    autocomplete.addListener('place_changed', function() {
-        const place = autocomplete.getPlace();
-        if (place.formatted_address) {
-            input.value = place.formatted_address;
-            if (onSelect) onSelect(place.formatted_address);
-        }
+    autocompleteElement.style.width = '100%';
+
+    input.parentNode.replaceChild(autocompleteElement, input);
+    autocompleteElement.id = inputId;
+
+    autocompleteElement.addEventListener('gmp-placeselect', (event) => {
+        const place = event.place;
+        place.fetchFields({ fields: ['formattedAddress'] }).then(() => {
+            autocompleteElement.value = place.formattedAddress;
+        });
     });
 }
