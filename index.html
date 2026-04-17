@@ -32,6 +32,7 @@
                  <!-- Dashboard and Meeting links, hidden by default and only show when logged in. --> 
                   <a onclick="showDashboard(); closeMobileMenu()" style="display: none;" id="dashboardLink">Dashboard</a>
                     <a onclick="showMyMeetings(); closeMobileMenu()" style="display: none;" id="meetingsLink">My Meetings</a>
+                    <a onclick="showDefaultAvailability(); closeMobileMenu()" style="display: none;" id="defaultAvailabilityLink">My Availability</a>
                   <a onclick="showAbout(); closeMobileMenu()">About</a>
                   <a onclick="showContact(); closeMobileMenu()">Contact</a>
 
@@ -148,6 +149,31 @@
              <!-- Meeting cards injected here by displayAllMeetings() in meetings.js -->
              <div class="meetings-grid" id="allMeetingsGrid">
                  <p style="text-align: center; color: #666; padding: 3rem;">Loading meetings...</p>
+             </div>
+         </div>
+     </section>
+     
+     <section id="defaultAvailability" style="display:none; padding: 3rem 0; min-height: 70vh;">
+         <div class="container">
+             <div class="page-header">
+                 <h1>📅 My Default Availability</h1>
+                 <p>Set your general weekly availability. When you open a new group for the first time, you'll be offered the option to apply this automatically.</p>
+             </div>
+             <div class="groups-section">
+                 <div class="legend" style="margin-bottom:1rem;">
+                     <span class="legend-item"><span class="legend-box available"></span>Available</span>
+                     <span class="legend-item"><span class="legend-box unavailable"></span>Unavailable</span>
+                 </div>
+                 <div class="grid-hint">
+                     💡 Tip: Click and drag to select multiple slots. Click a day header to select the whole day, or a time label to select that row.
+                 </div>
+                 <div class="availability-grid" id="globalAvailabilityGrid"></div>
+                 <div class="availability-actions" style="margin-top:1rem;">
+                     <button class="btn-primary" onclick="saveGlobalAvailability()">💾 Save My Availability</button>
+                     <button class="btn-secondary" onclick="selectAllGlobal()">Select All</button>
+                     <button class="btn-secondary" onclick="clearGlobal()">Clear All</button>
+                 </div>
+                 <div id="globalAvailabilityStamp" class="saved-stamp" style="display:none; margin-top:0.75rem;"></div>
              </div>
          </div>
      </section>
