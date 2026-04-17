@@ -635,16 +635,15 @@ function importCalendarEvents() {
 }
 
 function openLocationSettings() {
-  const currentUser = getCurrentUser();
-  if (!currentUser) { openLoginModal(); return; }
-
-  loadUserLocations(currentUser.id);
-
-  document.getElementById('locationModal').style.display = 'block';
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+    loadUserLocations(currentUser.id);
+    const modal = document.getElementById('locationModal');
+    modal.style.display = 'flex'; // flex instead of block
 }
 
 function closeLocationModal() {
-  document.getElementById('locationModal').style.display = 'none';
+    document.getElementById('locationModal').style.display = 'none';
 }
 
 function loadUserLocations(userId) {
