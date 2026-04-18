@@ -148,6 +148,7 @@ function logout() {
     document.getElementById('authButtons').style.display = 'flex';
     document.getElementById('dashboardLink').style.display = 'none';
     document.getElementById('meetingsLink').style.display = 'none'
+    document.getElementById('defaultAvailabilityLink').style.display = 'none';
     document.getElementById('locationSettingsBtn').style.display = 'none';
     location.reload();
 }
@@ -161,6 +162,7 @@ function showUserMenu(userName) {
     document.getElementById('userName').textContent = userName;
     document.getElementById('dashboardLink').style.display = 'block';
     document.getElementById('meetingsLink').style.display = 'block';
+    document.getElementById('defaultAvailabilityLink').style.display = 'block';
     document.getElementById('locationSettingsBtn').style.display = 'block';
 }
 
