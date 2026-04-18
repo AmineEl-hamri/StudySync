@@ -128,3 +128,12 @@ function markTutorialComplete() {
 function shouldShowTutorial() {
     return localStorage.getItem('studysync_tutorial_done') !== 'true';
 }
+
+function restartTutorial() {
+    // Clear completion flag so the tutorial shows fully
+    localStorage.removeItem('studysync_tutorial_done');
+    // Close the user dropdown if it's open
+    const dropdown = document.getElementById('dropdown');
+    if (dropdown) dropdown.classList.remove('show');
+    startTutorial();
+}
