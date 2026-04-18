@@ -2304,3 +2304,20 @@ body {
     font-weight: 600;
     color: #4F46E5;
 }
+
+/* Booked meeting slot overlaid on the availability grid */
+.time-slot.meeting-booked {
+    background: #A78BFA !important;
+    color: white !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    position: relative;
+}
+
+.time-slot.meeting-booked::after {
+    content: '📅';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+}
