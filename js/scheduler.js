@@ -52,7 +52,6 @@ function viewGroup(groupId) {
                 deleteBtn.style.display = 'none';
             }
  
-            generateAvailabilityGrid();
             setTimeout(() => initAutocomplete('meetingLocation'), 300);
             loadAvailability(groupId);
             loadMeetingLocation();
@@ -69,203 +68,8 @@ function backToDashboard() {
   currentGroupOwnerIdCache = null;
 }
 
-
-let isDragging = false;
-let dragMode = null;
-
-function generateAvailabilityGrid() {
-    const grid = document.getElementById('availabilityGrid');
-
-    let html = '<table class="availability-table"><thead><tr><th>Time</th>';
-    DAYS.forEach((day, dayIndex) => {
-        html += `<th class="day-header" onclick="selectEntireDay(${dayIndex})" style="cursor:pointer;" title="Click to select all ${day}">${day}</th>`;
-    });
-    html += '</tr></thead><tbody>';
-
-    TIME_SLOTS.forEach((time) => {
-        html += `<tr>
-            <td class="time-label" onclick="selectEntireRow('${time}')" style="cursor:pointer;" title="Click to select all ${time}">
-                ${time}
-            </td>`;
-        DAYS.forEach((day, dayIndex) => {
-            const slotId = `${dayIndex}-${time}`;
-            html += `<td>
-                <div class="time-slot"
-                    data-slot="${slotId}"
-                    onmousedown="startDrag('${slotId}', event)"
-                    onmouseenter="continueDrag('${slotId}')"
-                    onmouseup="endDrag()"
-                    ontouchstart="handleTouchStart('${slotId}', event)"
-                    ontouchmove="handleTouchMove(event)"
-                    ontouchend="endDrag()">
-                </div>
-            </td>`;
-        });
-        html += '</tr>';
-    });
-
-    html += '</tbody></table>';
-    grid.innerHTML = html;
-
-    grid.addEventListener('mouseleave', endDrag);
-    document.addEventListener('mouseup', endDrag);
-}
-
-function toggleSlot(slotId) {
-    if (isDragging) return; // handled by drag
-    const slotElement = document.querySelector(`[data-slot="${slotId}"]`);
-    if (selectedSlots.has(slotId)) {
-        selectedSlots.delete(slotId);
-        slotElement.classList.remove('selected');
-    } else {
-        selectedSlots.add(slotId);
-        slotElement.classList.add('selected');
-    }
-}
-
-function startDrag(slotId, event) {
-    event.preventDefault();
-    isDragging = false;
-    dragMode = selectedSlots.has(slotId) ? 'deselect' : 'select';
-    applyDragToSlot(slotId);
-}
-
-function continueDrag(slotId) {
-    if (dragMode === null) return;
-    isDragging = true;
-    applyDragToSlot(slotId);
-}
-
-function endDrag() {
-    isDragging = false;
-    dragMode = null;
-}
-
-function applyDragToSlot(slotId) {
-    const slotElement = document.querySelector(`[data-slot="${slotId}"]`);
-    if (!slotElement) return;
-    if (dragMode === 'select') {
-        selectedSlots.add(slotId);
-        slotElement.classList.add('selected');
-    } else {
-        selectedSlots.delete(slotId);
-        slotElement.classList.remove('selected');
-    }
-}
-
-function handleTouchStart(slotId, event) {
-    event.preventDefault(); // prevents scroll while selecting
-    isDragging = false;
-    dragMode = selectedSlots.has(slotId) ? 'deselect' : 'select';
-    applyDragToSlot(slotId);
-}
-
-function handleTouchMove(event) {
-    event.preventDefault();
-    const touch = event.touches[0];
-    // Find which element is under the finger
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (el && el.classList.contains('time-slot')) {
-        const slotId = el.getAttribute('data-slot');
-        if (slotId) {
-            isDragging = true;
-            applyDragToSlot(slotId);
-        }
-    }
-}
-
-function selectEntireDay(dayIndex) {
-    const daySlots = TIME_SLOTS.map(time => `${dayIndex}-${time}`);
-    const allSelected = daySlots.every(slot => selectedSlots.has(slot));
-
-    daySlots.forEach(slotId => {
-        const el = document.querySelector(`[data-slot="${slotId}"]`);
-        if (!el) return;
-        if (allSelected) {
-            selectedSlots.delete(slotId);
-            el.classList.remove('selected');
-        } else {
-            selectedSlots.add(slotId);
-            el.classList.add('selected');
-        }
-    });
-}
-
-function selectEntireRow(time) {
-    const rowSlots = DAYS.map((_, dayIndex) => `${dayIndex}-${time}`);
-    const allSelected = rowSlots.every(slot => selectedSlots.has(slot));
-
-    rowSlots.forEach(slotId => {
-        const el = document.querySelector(`[data-slot="${slotId}"]`);
-        if (!el) return;
-        if (allSelected) {
-            selectedSlots.delete(slotId);
-            el.classList.remove('selected');
-        } else {
-            selectedSlots.add(slotId);
-            el.classList.add('selected');
-        }
-    });
-}
-
-function selectAllAvailability() {
-    DAYS.forEach((_, dayIndex) => {
-        TIME_SLOTS.forEach(time => {
-            const slotId = `${dayIndex}-${time}`;
-            const el = document.querySelector(`[data-slot="${slotId}"]`);
-            if (el) {
-                selectedSlots.add(slotId);
-                el.classList.add('selected');
-            }
-        });
-    });
-}
-
-let isSaving = false;
 let isScheduling = false;
 
-function saveAvailability() {
-    if (isSaving) return;
-    if (selectedSlots.size === 0) {
-        alert('Please select at least one time slot!');
-        return;
-    }
-
-    const currentUser = getCurrentUser();
-    if (!currentUser) { openLoginModal(); return; }
-  
-    isSaving = true;
-    const btn = document.querySelector('.availability-actions .btn-primary');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
-
-    fetch(`${API_URL}/api/availability`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            group_id: currentGroupId,
-            user_id: currentUser.id,
-            slots: Array.from(selectedSlots)
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            loadAvailability(currentGroupId);
-            showSavedTimestamp();
-        } else {
-            alert('Failed to save availability: ' + (data.error || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        console.error('Save availability error:', error);
-        alert('Network error. Please try again.');
-    })
-    .finally(() => {
-        isSaving = false;
-        btn.disabled = false;
-        btn.textContent = 'Save My Availability';
-    });
-}
 
 function showSavedTimestamp() {
     const now = new Date();
@@ -285,15 +89,6 @@ function showSavedTimestamp() {
 
     // Fades out after 8 seconds but keeps the text
     setTimeout(() => { stamp.style.opacity = '0.5'; }, 8000);
-}
-
-function clearAvailability() {
-    if (selectedSlots.size === 0) return; // nothing to clear
-    if (!confirm('Clear all selected time slots? This cannot be undone.')) return;
-    selectedSlots.clear();
-    document.querySelectorAll('.time-slot.selected').forEach(slot => {
-        slot.classList.remove('selected');
-    });
 }
 
 function loadAvailability(groupId) {
@@ -986,3 +781,219 @@ function deleteGroup() {
     })
     .catch(() => alert('Network error. Please try again.'));
 }
+
+// Global Availability functions.
+
+let globalSelectedSlots = new Set();
+let isGlobalDragging = false;
+let globalDragMode = null;
+
+function generateGlobalAvailabilityGrid() {
+    const grid = document.getElementById('globalAvailabilityGrid');
+    if (!grid) return;
+
+    let html = '<table class="availability-table"><thead><tr><th>Time</th>';
+    DAYS.forEach((day, dayIndex) => {
+        html += `<th class="day-header" onclick="selectGlobalDay(${dayIndex})" 
+                 style="cursor:pointer;" title="Click to select all ${day}">${day}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    TIME_SLOTS.forEach((time) => {
+        html += `<tr>
+            <td class="time-label" onclick="selectGlobalRow('${time}')" 
+                style="cursor:pointer;" title="Click to select all ${time}">${time}</td>`;
+        DAYS.forEach((day, dayIndex) => {
+            const slotId = `global-${dayIndex}-${time}`;
+            html += `<td>
+                <div class="time-slot"
+                    data-slot="${slotId}"
+                    onmousedown="startGlobalDrag('${slotId}', event)"
+                    onmouseenter="continueGlobalDrag('${slotId}')"
+                    onmouseup="endGlobalDrag()"
+                    ontouchstart="handleGlobalTouchStart('${slotId}', event)"
+                    ontouchmove="handleGlobalTouchMove(event)"
+                    ontouchend="endGlobalDrag()">
+                </div>
+            </td>`;
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    grid.innerHTML = html;
+
+    grid.addEventListener('mouseleave', endGlobalDrag);
+    document.addEventListener('mouseup', endGlobalDrag);
+}
+
+function startGlobalDrag(slotId, event) {
+    event.preventDefault();
+    isGlobalDragging = false;
+    globalDragMode = globalSelectedSlots.has(slotId) ? 'deselect' : 'select';
+    applyGlobalDragToSlot(slotId);
+}
+
+function continueGlobalDrag(slotId) {
+    if (globalDragMode === null) return;
+    isGlobalDragging = true;
+    applyGlobalDragToSlot(slotId);
+}
+
+function endGlobalDrag() {
+    isGlobalDragging = false;
+    globalDragMode = null;
+}
+
+function applyGlobalDragToSlot(slotId) {
+    const el = document.querySelector(`[data-slot="${slotId}"]`);
+    if (!el) return;
+    if (globalDragMode === 'select') {
+        globalSelectedSlots.add(slotId);
+        el.classList.add('selected');
+    } else {
+        globalSelectedSlots.delete(slotId);
+        el.classList.remove('selected');
+    }
+}
+
+function handleGlobalTouchStart(slotId, event) {
+    event.preventDefault();
+    isGlobalDragging = false;
+    globalDragMode = globalSelectedSlots.has(slotId) ? 'deselect' : 'select';
+    applyGlobalDragToSlot(slotId);
+}
+
+function handleGlobalTouchMove(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (el && el.classList.contains('time-slot')) {
+        const slotId = el.getAttribute('data-slot');
+        if (slotId && slotId.startsWith('global-')) {
+            isGlobalDragging = true;
+            applyGlobalDragToSlot(slotId);
+        }
+    }
+}
+
+function selectGlobalDay(dayIndex) {
+    const daySlots = TIME_SLOTS.map(time => `global-${dayIndex}-${time}`);
+    const allSelected = daySlots.every(slot => globalSelectedSlots.has(slot));
+    daySlots.forEach(slotId => {
+        const el = document.querySelector(`[data-slot="${slotId}"]`);
+        if (!el) return;
+        if (allSelected) {
+            globalSelectedSlots.delete(slotId);
+            el.classList.remove('selected');
+        } else {
+            globalSelectedSlots.add(slotId);
+            el.classList.add('selected');
+        }
+    });
+}
+
+function selectGlobalRow(time) {
+    const rowSlots = DAYS.map((_, dayIndex) => `global-${dayIndex}-${time}`);
+    const allSelected = rowSlots.every(slot => globalSelectedSlots.has(slot));
+    rowSlots.forEach(slotId => {
+        const el = document.querySelector(`[data-slot="${slotId}"]`);
+        if (!el) return;
+        if (allSelected) {
+            globalSelectedSlots.delete(slotId);
+            el.classList.remove('selected');
+        } else {
+            globalSelectedSlots.add(slotId);
+            el.classList.add('selected');
+        }
+    });
+}
+
+function selectAllGlobal() {
+    DAYS.forEach((_, dayIndex) => {
+        TIME_SLOTS.forEach(time => {
+            const slotId = `global-${dayIndex}-${time}`;
+            const el = document.querySelector(`[data-slot="${slotId}"]`);
+            if (el) {
+                globalSelectedSlots.add(slotId);
+                el.classList.add('selected');
+            }
+        });
+    });
+}
+
+function clearGlobal() {
+    if (globalSelectedSlots.size === 0) return;
+    if (!confirm('Clear all default availability slots?')) return;
+    globalSelectedSlots.clear();
+    document.querySelectorAll('#globalAvailabilityGrid .time-slot.selected')
+        .forEach(el => el.classList.remove('selected'));
+}
+
+let isGlobalSaving = false;
+
+function saveGlobalAvailability() {
+    if (isGlobalSaving) return;
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+
+    isGlobalSaving = true;
+    const btn = document.querySelector('#globalAvailabilityGrid')
+        ?.closest('.groups-section')
+        ?.querySelector('.btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+
+    // Convert global slot IDs (global-0-09:00) back to standard format (0-09:00)
+    const slots = Array.from(globalSelectedSlots).map(s => s.replace('global-', ''));
+
+    fetch(`${API_URL}/api/users/${currentUser.id}/availability`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slots })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const stamp = document.getElementById('globalAvailabilityStamp');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            stamp.textContent = `✅ Default availability saved at ${timeStr}`;
+            stamp.style.display = 'block';
+            setTimeout(() => stamp.style.opacity = '0.5', 5000);
+        } else {
+            alert('Failed to save: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(() => alert('Network error. Please try again.'))
+    .finally(() => {
+        isGlobalSaving = false;
+        if (btn) { btn.disabled = false; btn.textContent = '💾 Save Default Availability'; }
+    });
+}
+
+function loadGlobalAvailability() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    fetch(`${API_URL}/api/users/${currentUser.id}/availability`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.slots.length > 0) {
+                globalSelectedSlots = new Set(data.slots.map(s => `global-${s}`));
+                globalSelectedSlots.forEach(slotId => {
+                    const el = document.querySelector(`[data-slot="${slotId}"]`);
+                    if (el) el.classList.add('selected');
+                });
+
+                const stamp = document.getElementById('globalAvailabilityStamp');
+                if (stamp) {
+                    stamp.textContent = '📋 Default availability loaded, make changes and save to update';
+                    stamp.style.display = 'block';
+                    stamp.style.opacity = '0.6';
+                }
+            }
+        })
+        .catch(() => console.error('Failed to load global availability'));
+}
+
+
