@@ -229,46 +229,7 @@
                Clicking the day header selects the entire day.
                Clicking the time label selects the entire row.
                saveAvailability() posts to POST /api/availability -->
-               <div class="availability-section">
-                    <h2>Set Your Availability</h2>
-                    <p>Click the times when you're <strong>free to meet</strong>, green means available. Click a day header to select the whole day, or a time label to select that row.</p>
-                    
-                    <!-- Google Calendar import, triggers OAuth if not already connected. -->
-                    <div class="import-section">
-                         <button class="btn-import-google" onclick="importGoogleCalendar()">
-                              Import from Google Calendar
-                         </button>
-                         <span id="googleConnectionStatus" class="connection-status"></span>
-                    </div>
-
-                    <!-- Colour legend for the availability grid. -->
-                    <div class="legend">
-                         <span class="legend-item"><span class="legend-box available"></span>Available</span>
-                         <span class="legend-item"><span class="legend-box unavailable"></span>Unavailable</span>
-                    </div>
-
-                    <!-- Availability grid table created here through generateAvailabilityGrid() -->
-                    <div class="grid-hint">
-                        💡 Tip: Click and drag across multiple slots to select them all at once. On mobile, touch and swipe works too.
-                    </div>
-                    <div class="availability-grid" id="availabilityGrid">
-                    </div>
-
-                    <!-- Grid action buttons. -->
-                    <div class="availability-actions">
-                         <!-- Saves selected slots through POST /api/availability -->
-                         <button class="btn-primary" onclick="saveAvailability()">Save My Availability</button>
-                         
-                         <!-- Selects all slots. -->
-                         <button class="btn-secondary" onclick="selectAllAvailability()">Select All</button>
-                         
-                         <!-- Clears all selected slots. -->
-                         <button class="btn-secondary" onclick="clearAvailability()">Clear All</button>
-                         
-                         <!-- Second Google Calendar import button for convenience. -->
-                         <button class="btn-import" id="importCalendarBtn" onclick="importGoogleCalendar()">Import Availability</button>
-                    </div>
-               </div>
+          
 
                <!-- Shows availability status for each group member (submitted/pending).
                Generated through showAvailabilityStatus() in scheduler.js
