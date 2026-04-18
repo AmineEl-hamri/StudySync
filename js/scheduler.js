@@ -314,14 +314,18 @@ function displayScheduleResults(optimalTimes) {
             for (const email in option.travel_info) {
                 const travel = option.travel_info[email];
                 const memberName = email.split('@')[0];
-                
+            
+                const modeIcons = { driving: '🚗', transit: '🚆', walking: '🚶', bicycling: '🚴' };
+                const modeIcon = modeIcons[travel.mode] || '🚆';
+            
                 let trafficIcon = '🟢';
                 let trafficText = 'Light traffic';
                 if (travel.duration_minutes > 45) { trafficIcon = '🔴'; trafficText = 'Heavy traffic'; }
                 else if (travel.duration_minutes > 25) { trafficIcon = '🟡'; trafficText = 'Moderate traffic'; }
+            
                 travelInfoHtml += `
                     <div class="travel-timeline">
-                        <div class="travel-member-name">${memberName}</div>
+                        <div class="travel-member-name">${memberName} ${modeIcon}</div>
                         <div class="timeline-row">
                             <span class="timeline-step departure">🏠 Leave: <strong>${travel.departure_time}</strong></span>
                             <span class="timeline-arrow">→</span>
