@@ -8,8 +8,14 @@ const TUTORIAL_STEPS = [
     {
         icon: '📍',
         title: 'Set Your Location',
-        description: 'Before creating a group, set your preffered location. StudySync uses this to calculate real travel times to meeting locations for everyone in your group.',
+        description: 'Before creating a group, set your preferred location. StudySync uses this to calculate real travel times to meeting locations for everyone in your group.',
         tip: '💡 Click "My Locations" in the navbar to add your home or work address.'
+    },
+    {
+        icon: '🚗',
+        title: 'Set Your Transport Mode',
+        description: 'In your Profile, choose how you typically travel to meetings: driving, public transport, walking, or cycling. StudySync uses this to calculate accurate travel times for each member based on how they\'re getting there.',
+        tip: '💡 Default is public transport. You can change it any time from your Profile page.'
     },
     {
         icon: '👥',
@@ -20,14 +26,14 @@ const TUTORIAL_STEPS = [
     {
         icon: '📅',
         title: 'Import Google Calendar',
-        description: 'Inside your group, you can connect your Google Calendar. StudySync will automatically read your busy times and mark you as available for all your free slots — no manual input needed.',
-        tip: '💡 Click "Import from Google Calendar" inside your group page. You\'ll only need to authorise once.'
+        description: 'Head to "My Availability", you can connect your Google Calendar. in the navbar. StudySync will automatically read your busy times and mark you as available for all your free slots - no manual input needed.',
+        tip: '💡 Click "Import from Google Calendar" on the My Availability page. You\'ll only need to authorise once.'
     },
     {
         icon: '🟩',
         title: 'Set Your Availability',
-        description: 'Prefer to do it manually? Click on the time grid to mark when you\'re free. Green means available. Each member of your group does this independently.',
-        tip: '💡 Make sure to click "Save My Availability" after selecting your slots — it won\'t save automatically.'
+        description: 'Prefer to do it manually? Go to "My Availability" in the navbar and click on the time grid to mark when you\'re free. Green means available. Each member of your group does this independently.',
+        tip: '💡 Make sure to click "Save My Availability" after selecting your slots - it won\'t save automatically.'
     },
     {
         icon: '🧠',
