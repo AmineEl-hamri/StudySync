@@ -1,7 +1,16 @@
+// main.js handles navigation, profile, contact form, transport preference, and shared utilities.
+// Loaded after auth.js and groups.js but before the feature-specific modules, so helpers
+// like hideAllSections() are available to everything that follows.
+
+
+// App entry point, runs once the DOM (Document object model) is ready.
+// Order is important: check login first so navigation state reflects the user,
+// then connect event listeners, then warn about server cold starts.
 window.onload = function() {
     checkLoginStatus();
     setupEventListeners();
     showLoadingState(); 
+    // Google Maps script is loaded with 'defer', so Places autocomplete isn't available immediately.
     // Initialise Places autocomplete after Google Maps script loads
     setTimeout(() => {
         initAutocomplete('homeAddress');
@@ -10,10 +19,15 @@ window.onload = function() {
     }, 1000);
 }
 
+// Shows a helpful "server is starting up" note if the first API ping takes longer 
+// than 4s, which happens when Cloud RUn has scaled to zero after inactivity.
+// Cancelled automatically if the API responds in time.
 function showLoadingState() {
     // If API doesn't respond within 8s, show a helpful message
     const timer = setTimeout(() => {
         const home = document.getElementById('home');
+        // Only show the note if the user is still on home page,
+        // if they've navigated away, the notice would not make sense.
         if (home && home.style.display !== 'none') {
             const existing = document.getElementById('apiLoadingNote');
             if (!existing) {
@@ -33,6 +47,7 @@ function showLoadingState() {
         .catch(() => {}); // silent, the note will appear if needed
 }
 
+// Global event listeners, currently just the click outside to close behaviour for modals.
 function setupEventListeners() {
     // Close modals when clicking outside
     window.onclick = function(event) {
@@ -43,6 +58,9 @@ function setupEventListeners() {
     };
 }
 
+// Hides every top-level section. Called by each 'show' function before revealing its target 
+// section, so only one view is visible at a time. This is how the single-page app switches
+// 'pages' without actual page reloads.
 function hideAllSections() {
     const sections = ['home', 'dashboard', 'myMeetings', 'groupDetails', 'about',
                       'contact', 'profile', 'privacyPolicy', 'defaultAvailability'];
@@ -54,6 +72,9 @@ function hideAllSections() {
     });
 }
 
+// Section navigation
+// Each 'show' function follows the same pattern: auth-gate if needed.
+// hide everything, then show the target section (and load its data if relevant).
 function showHome() {
     hideAllSections();
     document.getElementById('home').style.display = 'block';
@@ -71,7 +92,7 @@ function showContact() {
 function showPrivacyPolicy() {
     hideAllSections();
     document.getElementById('privacyPolicy').style.display = 'block';
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); // This is a long page, so always start from the top.
 }
 
 function showDashboard() {
@@ -90,12 +111,18 @@ function showMyMeetings() {
     loadAllUserMeetings();
 }
 
+
+// Shows the profile page and populates every section: personal info, avatar, availability
+// preferences, and the transport mode. Each load is a separate fetch so one slow response 
+// doesn't block others.
 function showProfile() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
     hideAllSections();
     document.getElementById('profile').style.display = 'block';
- 
+
+    // Fetch the full user record, returns fresh data from the database rather than 
+    // relying on possibly-stale localStorage copy.
     fetch(`${API_URL}/api/users/${currentUser.id}`)
         .then(r => r.json())
         .then(data => {
@@ -105,6 +132,8 @@ function showProfile() {
                 document.getElementById('profileEmail').value = user.email || '';
                 document.getElementById('profileDisplayName').textContent = user.name || 'User';
                 document.getElementById('profileDisplayEmail').textContent = user.email || '';
+                // Use the uploaded picture if available, otherwise fall back to the first 
+                // letter of the user's name in the avatar circle.
                 const avatar = document.getElementById('profileAvatar');
                 if (user.profile_picture) {
                     avatar.innerHTML = `<img src="${user.profile_picture}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
@@ -117,10 +146,12 @@ function showProfile() {
             document.getElementById('profileUpdateError').textContent = 'Could not load profile. Please refresh.';
         });
  
-    loadPreferences();
-    loadTransportMode();
+    loadPreferences(); // preferences.js, availability preferences
+    loadTransportMode(); // defined below, populates the transport buttons.
 }
 
+// Saves changes to name and email. Validates locally before hitting the API to avoid a round-trip
+// for obvious errors. The backend enforces the same rules.
 function updateProfile() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
@@ -154,7 +185,8 @@ function updateProfile() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            // update localStorage
+            // Keep localStorage in sync so the navbar and other views pick up the new values
+            // without needing a page reload.
             const updated = { ...currentUser, name: data.user.name, email: data.user.email };
             localStorage.setItem('currentUser', JSON.stringify(updated));
             document.getElementById('profileDisplayName').textContent = data.user.name;
@@ -174,6 +206,8 @@ function updateProfile() {
     .catch(() => errorEl.textContent = 'Network error. Please try again.');
 }
 
+// Password change, requires the current password as a safety check to prevent a compromised 
+// session from silently resetting the password.
 function changePassword() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
@@ -209,6 +243,8 @@ function changePassword() {
     .then(data => {
         if (data.success) {
             successEl.textContent = '✅ Password updated successfully!';
+            // Clear all three password fields on success so they don't sit in the DOM 
+            // in case someone else gets to the keyboard.
             document.getElementById('currentPassword').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
@@ -220,11 +256,15 @@ function changePassword() {
     .catch(() => errorEl.textContent = 'Network error. Please try again.');
 }
 
+
+// Handles the file input on the profile page. Validates size and type locally with backend validation.
+// Shows the preview immediately, and uploads in the background.
 function previewAvatar(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    // Frontend file size check with 5MB limit.
+    // Frontend file size check with 5MB limit. base64 encoding inflates this by roughly 33%, so the
+    // backend is configured to accept slighlty more than the raw file size.
     if (file.size > 5 * 1024 * 1024) {
         alert('Image must be smaller than 5MB. Please choose a smaller file.');
         event.target.value = '';
@@ -238,7 +278,9 @@ function previewAvatar(event) {
         event.target.value = '';
         return;
     }
-    
+
+    // Read the file as base64, swap in the preview, then trigger the upload.
+    // The preview appears before the upload completes, giving instant feedback.
     const reader = new FileReader();
     reader.onload = function(e) {
         const avatar = document.getElementById('profileAvatar');
@@ -248,6 +290,9 @@ function previewAvatar(event) {
     reader.readAsDataURL(file);
 }
 
+// Sends the base64-encoded image to the backend, which uploads it to Google Cloud Storage
+// and returns the public URL. The URL is saved to localStorage so the avatar persists 
+// across navigations without another API call.
 function uploadProfilePicture(base64Data, contentType) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -271,6 +316,8 @@ function uploadProfilePicture(base64Data, contentType) {
     .catch(() => alert('Network error uploading picture.'));
 }
 
+// Submits the contact form. Sends to the backend which relays to developer's (me) email via SMTP.
+// No account required, anyone on the site can submit the form.
 function submitContactForm(event) {
     event.preventDefault();
     const name = document.getElementById('contactName').value.trim();
@@ -298,6 +345,7 @@ function submitContactForm(event) {
         if (data.success) {
             successEl.textContent = '✅ Message sent! We\'ll get back to you soon.';
             errorEl.textContent = '';
+            // Clear the form so the user doesn't accidentally submit it twice.
             document.getElementById('contactName').value = '';
             document.getElementById('contactEmail').value = '';
             document.getElementById('contactSubject').value = '';
@@ -310,6 +358,8 @@ function submitContactForm(event) {
     .catch(() => errorEl.textContent = 'Network error. Please try again.');
 }
 
+// Expands/collapses an FAQ answer and rotates the arrow indicator.
+// The answer element is the immediate sibling of the question row.
 function toggleFaq(element) {
     const answer = element.nextElementSibling;
     const arrow = element.querySelector('.faq-arrow');
@@ -318,6 +368,8 @@ function toggleFaq(element) {
     arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
+// Mobile navigation, the hamburger button toggles an '.open' class that CSS
+// uses to slide the nav drawer in and out.
 function toggleMobileMenu() {
     document.getElementById('navLinks').classList.toggle('open');
 }
@@ -326,6 +378,8 @@ function closeMobileMenu() {
     document.getElementById('navLinks').classList.remove('open');
 }
 
+// Permanently deletes the user's account. Double-confirm pattern to make it extremely hard
+// to trigger this by accident.
 function deleteAccount() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
@@ -340,6 +394,8 @@ function deleteAccount() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            // Clear session and reload, the reloaded page will show the logged-out
+            // state since localStorage is gone.
             localStorage.removeItem('currentUser');
             alert('Your account has been permanently deleted.');
             location.reload();
@@ -350,8 +406,11 @@ function deleteAccount() {
     .catch(() => alert('Network error. Please try again.'));
 }
 
+// Upgrades a plain <input> into a Google Places autocomplete element.
+// Restricted to the UK to avoid irrelevant suggestions.
 function initAutocomplete(inputId) {
     const input = document.getElementById(inputId);
+    // Guard against missing input or Google Maps not having loaded.
     if (!input || typeof google === 'undefined') return;
 
     const autocompleteElement = new google.maps.places.PlaceAutocompleteElement({
@@ -361,9 +420,12 @@ function initAutocomplete(inputId) {
 
     autocompleteElement.style.width = '100%';
 
+    // Replace the <input> with the autocomplete element, keeping the original id
+    // so exisitng code that references the element still works.
     input.parentNode.replaceChild(autocompleteElement, input);
     autocompleteElement.id = inputId;
 
+    // When a place is selected, fetch its full formatted address and set the value.
     autocompleteElement.addEventListener('gmp-placeselect', (event) => {
         const place = event.place;
         place.fetchFields({ fields: ['formattedAddress'] }).then(() => {
@@ -372,6 +434,9 @@ function initAutocomplete(inputId) {
     });
 }
 
+// Shows the My Availability page. Rebuilds the grid every time (rather than keeping a persistent one)
+// so any layout or CSS changes always take effect, and then fetches the user's saves slots
+// and overlays any booked meetings
 function showDefaultAvailability() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
