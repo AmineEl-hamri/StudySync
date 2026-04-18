@@ -135,7 +135,7 @@ function loadAvailability(groupId) {
 
 // Overlay confirmed meetings onto the current week's availability grid.
 function overlayMeetingsOnGrid(meetings) {
-    // First clear any previous meeting overlays (in case we're refreshing)
+    // clear any previous meeting overlays
     document.querySelectorAll('.time-slot.meeting-booked').forEach(el => {
         el.classList.remove('meeting-booked');
         el.title = '';
@@ -163,7 +163,7 @@ function overlayMeetingsOnGrid(meetings) {
         const gridDayIndex = jsDayToGridIndex[mDate.getDay()];
         const timeStr = meeting.meeting_time.slice(0, 5); 
 
-        const slotId = `${gridDayIndex}-${timeStr}`;
+        const slotId = `global-${gridDayIndex}-${timeStr}`
         const cell = document.querySelector(`.time-slot[data-slot="${slotId}"]`);
         if (cell) {
             cell.classList.add('meeting-booked');
@@ -892,6 +892,8 @@ function generateGlobalAvailabilityGrid() {
 
 function startGlobalDrag(slotId, event) {
     event.preventDefault();
+    const el = document.querySelector(`[data-slot="${slotId}"]`);
+    if (el && el.classList.contains('meeting-booked')) return; // don't toggle over a meeting
     isGlobalDragging = false;
     globalDragMode = globalSelectedSlots.has(slotId) ? 'deselect' : 'select';
     applyGlobalDragToSlot(slotId);
@@ -1057,6 +1059,13 @@ function loadGlobalAvailability() {
             }
         })
         .catch(() => console.error('Failed to load global availability'));
+    // Fetch this user's meetings (across all groups) and overlay on the grid
+    fetch(`${API_URL}/api/users/${currentUser.id}/meetings`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) overlayMeetingsOnGlobalGrid(data.meetings);
+        })
+        .catch(() => console.error('Failed to load meetings for overlay'));
 }
 
 
