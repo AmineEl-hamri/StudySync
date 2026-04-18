@@ -1064,8 +1064,9 @@ function loadGlobalAvailability() {
         .then(r => r.json())
         .then(data => {
             if (data.success) overlayMeetingsOnGlobalGrid(data.meetings);
+            else console.error('Meetings overlay failed:', data.error);
         })
-        .catch(() => console.error('Failed to load meetings for overlay'));
+        .catch(err => console.error('Failed to load meetings for overlay:', err));
 }
 
 
