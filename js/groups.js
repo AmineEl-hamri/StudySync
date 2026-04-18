@@ -1,3 +1,8 @@
+// groups.js handles group creation, member management, and dashboard rendering.
+// It depends on auth.js for the function getCurrentUser() and the variable API_URL
+
+// Temp list of members emails while the create group modal is open.
+// Cleard when the modal is closed or the group is created.
 let tempMembers = [];
 
 // Retries a fetch up to maxAttempts times with increasing delays
@@ -16,6 +21,9 @@ async function fetchWithRetry(url, options, maxAttempts = 5) {
     }
 }
 
+// Submits the Create Group form. Inputs are validated then sent to the backend with
+// fetchWithRetry (to absorb cold starts), and on success reloads the dashboard and 
+// opens the new group.
 async function createGroup(event) {
     event.preventDefault();
  
@@ -29,7 +37,8 @@ async function createGroup(event) {
  
     errorDiv.textContent = '';
     successDiv.textContent = '';
- 
+
+    // Frontend validation, mirrors the backend check for faster feedback.
     if (groupName.length < 2) {
         errorDiv.textContent = 'Group name must be at least 2 characters!';
         return;
@@ -40,14 +49,14 @@ async function createGroup(event) {
         return;
     }
  
-    // Disable button and show loading state while waiting
+    // Lock the submit button while the request is processing to prevent double submissions.
     const submitBtn = document.querySelector('#createGroupModal .btn-submit');
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Creating...';
  
     try {
         const response = await fetchWithRetry(`${API_URL}/api/groups`, {
-            method: 'POST',
+            method: 'POST', // POST /api/groups, backend handles duplicate name checks 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 name: groupName,
@@ -60,13 +69,17 @@ async function createGroup(event) {
         const data = await response.json();
  
         if (data.success) {
+            // Backend returns skipped_emails for members whose accounts don't exist.
+            // Its shown to the user rather.
             let message = 'Group created successfully!';
             if (data.skipped_emails && data.skipped_emails.length > 0) {
                 message += ` Note: ${data.skipped_emails.join(', ')} could not be added (account not found).`;
             }
             successDiv.textContent = message;
             tempMembers = [];
- 
+
+            // Small delay so the user can read the success message.
+            // Reload the dashboard and show the new group.
             const newGroupId = data.group_id;
             setTimeout(() => {
                 closeCreateGroupModal();
@@ -83,13 +96,17 @@ async function createGroup(event) {
             errorDiv.textContent = data.error || 'Failed to create group';
         }
     } catch (err) {
+        // Only reached if all retry attempts fail. This means the server is currently unreachable.
         errorDiv.textContent = 'Server is unavailable after several attempts. Please refresh and try again.';
     } finally {
+        // Always restore the button state to allow users to retry.
         submitBtn.disabled = false;
         submitBtn.textContent = 'Create Group';
     }
 }
 
+// Adds a member email to the temp list 
+// Actual group membership is created server-side only when the form is submitted.
 function addMember() {
   const memberEmail = document.getElementById('memberEmail').value.trim();
 
@@ -97,7 +114,8 @@ function addMember() {
     alert('Please enter an email address.');
     return;
   }
-  
+
+  // Basic email format check, also performed in the backend.  
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(memberEmail)) {
     alert('Please enter a valid email address.');
     return;
@@ -114,11 +132,14 @@ function addMember() {
 
 }
 
+// Removes a member from the temp list. Called through the 'Remove' button.
 function removeMember(email) {
   tempMembers = tempMembers.filter(m => m !== email);
   renderMembersList();
 }
 
+// Re-renders the member tag list inside the Create Group modal.
+// Called whenever tempMembers changes.
 function renderMembersList() {
   const membersList = document.getElementById('membersList');
   membersList.innerHTML = '';
@@ -133,6 +154,8 @@ function renderMembersList() {
   });
 }
 
+// Fetches the current user's groups from the backend and hands them off to displayGroups()
+// for rendering. Also called when the dashboard is shown.
 function loadGroups() {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -154,9 +177,12 @@ function loadGroups() {
         });
 }
 
+// Builds the group cards on the dashboard. Each card shows the group's name, description 
+// owner, a preview of members, and a coloured indication of how many members have submitted availability.
 function displayGroups(groups) {
     const groupsGrid = document.getElementById('groupsGrid');
- 
+
+    // Empty state, shown only for brand-new users.
     if (groups.length === 0) {
         groupsGrid.innerHTML = `
             <div class="empty-state">
@@ -173,14 +199,18 @@ function displayGroups(groups) {
     groups.forEach(group => {
         const groupCard = document.createElement('div');
         groupCard.className = 'group-card';
+        // Whole card is clickable, takes the user into group detail view.
         groupCard.onclick = () => viewGroup(group.id);
 
+        // Show up to 3 member badges, then a '+N more' for more members.
         const membersHtml = group.members.slice(0, 3).map(email =>
             `<span class="member-badge">${email.split('@')[0]}</span>`
         ).join('');
         const moreMembers = group.members.length > 3
             ? `<span class="member-badge">+${group.members.length - 3} more</span>` : '';
 
+        // Availability progress indicator, colours reflect how many members have submitted.
+        // Green when all submitted, amber when partial, and grey when none.
         const totalMembers = group.members.length;
         const submitted = group.submittedCount || 0;
         const allSubmitted = submitted === totalMembers;
@@ -209,6 +239,7 @@ function displayGroups(groups) {
     });
 }
 
+// Opens the Create Group modal and resets all its state so it starts fresh.
 function openCreateGroupModal() {
   tempMembers = []; // Reset temporary members
   document.getElementById('createGroupModal').classList.add('active');
@@ -220,6 +251,8 @@ function openCreateGroupModal() {
   document.getElementById('createGroupSuccess').textContent = '';
 }
 
+// Closes the Create Group modal. The state is reset when it's next opened, not on close, so
+// interrupted sessions don't lose input immediately.
 function closeCreateGroupModal() {
   document.getElementById('createGroupModal').classList.remove('active');
 }
