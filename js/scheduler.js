@@ -367,29 +367,6 @@ function displayScheduleResults(optimalTimes) {
     resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function importGoogleCalendar() {
-    const currentUser = getCurrentUser();
-    if (!currentUser) { alert('Please login first!'); return; }
- 
-    const importBtn = document.getElementById('importCalendarBtn');
-    importBtn.disabled = true;
-    importBtn.textContent = '🔄 Connecting...';
- 
-    fetch(`${API_URL}/api/oauth/status/${currentUser.id}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.google_connected) {
-                importCalendarEvents();
-            } else {
-                startOAuthFlow(currentUser.id, importBtn);
-            }
-        })
-        .catch(() => {
-            importBtn.disabled = false;
-            importBtn.textContent = '📅 Import from Google Calendar';
-            alert('Network error. Please try again.');
-        });
-}
 
 function checkTrafficAlerts(optimalTimes) {
     let alerts = [];
@@ -409,81 +386,6 @@ function checkTrafficAlerts(optimalTimes) {
         return '<div class="traffic-alert">⚠️ <strong>Traffic Alert:</strong> ' + alerts.join(', ') + '</div>';
     }
     return '';
-}
-
-function startOAuthFlow(userId, importBtn) {
-    importBtn.textContent = '🔄 Connecting...';
-    fetch(`${API_URL}/api/oauth/google/initiate?user_id=${userId}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                window.open(data.authorization_url, 'Google Calendar Authorization', 'width=600,height=700');
-                window.addEventListener('message', function handler(event) {
-                    if (event.data.type === 'oauth_success' && event.data.provider === 'google') {
-                        window.removeEventListener('message', handler);
-                        importBtn.textContent = '📅 Import from Google Calendar';
-                        importBtn.disabled = false;
-                        importCalendarEvents();
-                    }
-                });
-            } else {
-                alert('Failed to initiate calendar connection');
-                importBtn.disabled = false;
-                importBtn.textContent = '📅 Import from Google Calendar';
-            }
-        })
-        .catch(() => {
-            alert('Network error. Please try again.');
-            importBtn.disabled = false;
-            importBtn.textContent = '📅 Import from Google Calendar';
-        });
-}
-
-function importCalendarEvents() {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
- 
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
-    monday.setHours(0, 0, 0, 0);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
- 
-    const importBtn = document.getElementById('importCalendarBtn');
-    importBtn.textContent = '⏳ Importing this week...';
- 
-    fetch(`${API_URL}/api/calendar/import/${currentGroupId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            user_id: currentUser.id,
-            start_date: monday.toISOString(),
-            end_date: sunday.toISOString()
-        })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            const weekStr = `${monday.toLocaleDateString()} - ${sunday.toLocaleDateString()}`;
-            alert(`✅ Imported this week (${weekStr})\n${data.slots_count} available slots found!`);
-            loadAvailability(currentGroupId);
-            importBtn.textContent = '✅ Imported!';
-            setTimeout(() => { importBtn.textContent = '📅 Import from Google Calendar'; }, 3000);
-        } else {
-            alert('Failed to import calendar: ' + (data.error || 'Unknown error'));
-            importBtn.textContent = '📅 Import from Google Calendar';
-        }
-    })
-    .catch(() => {
-        alert('Network error. Please try again.');
-        importBtn.textContent = '📅 Import from Google Calendar';
-    })
-    .finally(() => {
-        importBtn.disabled = false;
-    });
 }
 
 function openLocationSettings() {
@@ -1080,4 +982,110 @@ function loadGlobalAvailability() {
         .catch(err => console.error('Failed to load meetings for overlay:', err));
 }
 
+function importGoogleCalendarGlobal() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+
+    if (!confirm('This will replace your current availability with events from your Google Calendar (this week). Continue?')) {
+        return;
+    }
+
+    const btn = document.getElementById('importCalendarGlobalBtn');
+    btn.disabled = true;
+    btn.textContent = '🔄 Connecting...';
+
+    fetch(`${API_URL}/api/oauth/status/${currentUser.id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.google_connected) {
+                runGlobalCalendarImport();
+            } else {
+                startOAuthFlowGlobal(currentUser.id, btn);
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.textContent = '📅 Import from Google Calendar';
+            alert('Network error. Please try again.');
+        });
+}
+
+function startOAuthFlowGlobal(userId, btn) {
+    btn.textContent = '🔄 Connecting...';
+    fetch(`${API_URL}/api/oauth/google/initiate?user_id=${userId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.open(data.authorization_url, 'Google Calendar Authorization', 'width=600,height=700');
+                window.addEventListener('message', function handler(event) {
+                    if (event.data.type === 'oauth_success' && event.data.provider === 'google') {
+                        window.removeEventListener('message', handler);
+                        runGlobalCalendarImport();
+                    }
+                });
+            } else {
+                alert('Failed to initiate calendar connection');
+                btn.disabled = false;
+                btn.textContent = '📅 Import from Google Calendar';
+            }
+        })
+        .catch(() => {
+            alert('Network error. Please try again.');
+            btn.disabled = false;
+            btn.textContent = '📅 Import from Google Calendar';
+        });
+}
+
+function runGlobalCalendarImport() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    // Monday to Sunday of the current week
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const btn = document.getElementById('importCalendarGlobalBtn');
+    btn.textContent = '⏳ Importing this week...';
+
+    fetch(`${API_URL}/api/users/${currentUser.id}/calendar/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            start_date: monday.toISOString(),
+            end_date: sunday.toISOString()
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const weekStr = `${monday.toLocaleDateString()} – ${sunday.toLocaleDateString()}`;
+            alert(`✅ Imported this week (${weekStr})\n${data.slots_count} available slots found across ${data.groups_updated} groups!`);
+
+            // Refresh the grid to show the new slots
+            globalSelectedSlots.clear();
+            document.querySelectorAll('#globalAvailabilityGrid .time-slot.selected')
+                .forEach(el => el.classList.remove('selected'));
+            loadGlobalAvailability();
+
+            btn.textContent = '✅ Imported!';
+            setTimeout(() => { btn.textContent = '📅 Import from Google Calendar'; }, 3000);
+        } else {
+            alert('Failed to import calendar: ' + (data.error || 'Unknown error'));
+            btn.textContent = '📅 Import from Google Calendar';
+        }
+    })
+    .catch(() => {
+        alert('Network error. Please try again.');
+        btn.textContent = '📅 Import from Google Calendar';
+    })
+    .finally(() => {
+        btn.disabled = false;
+    });
+}
 
