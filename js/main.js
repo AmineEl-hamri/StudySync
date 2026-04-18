@@ -118,6 +118,7 @@ function showProfile() {
         });
  
     loadPreferences();
+    loadTransportMode();
 }
 
 function updateProfile() {
@@ -378,4 +379,52 @@ function showDefaultAvailability() {
     document.getElementById('defaultAvailability').style.display = 'block';
     generateGlobalAvailabilityGrid();
     loadGlobalAvailability();
+}
+
+function loadTransportMode() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    fetch(`${API_URL}/api/users/${currentUser.id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const mode = data.user.transport_mode || 'transit';
+                const radio = document.querySelector(`input[name="transportMode"][value="${mode}"]`);
+                if (radio) radio.checked = true;
+            }
+        })
+        .catch(() => console.error('Failed to load transport mode'));
+}
+
+function saveTransportMode() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+
+    const selected = document.querySelector('input[name="transportMode"]:checked');
+    const successEl = document.getElementById('transportSuccess');
+    const errorEl = document.getElementById('transportError');
+    successEl.textContent = '';
+    errorEl.textContent = '';
+
+    if (!selected) {
+        errorEl.textContent = 'Please select a transport mode.';
+        return;
+    }
+
+    fetch(`${API_URL}/api/users/${currentUser.id}/transport`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transport_mode: selected.value })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            successEl.textContent = '✅ Transport preference saved!';
+            setTimeout(() => successEl.textContent = '', 3000);
+        } else {
+            errorEl.textContent = data.error || 'Failed to save';
+        }
+    })
+    .catch(() => errorEl.textContent = 'Network error. Please try again.');
 }
