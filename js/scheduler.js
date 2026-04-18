@@ -8,6 +8,13 @@ const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00
 function viewGroup(groupId) {
     currentGroupId = groupId;
     currentGroupOwnerIdCache = null; // reset cache on new group
+
+    const resultsDiv = document.getElementById('scheduleResults');
+    if (resultsDiv) {
+        resultsDiv.style.display = 'none';
+        document.getElementById('recommendedTimes').innerHTML = '';
+    }
+
  
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
