@@ -45,7 +45,7 @@ function setupEventListeners() {
 
 function hideAllSections() {
     const sections = ['home', 'dashboard', 'myMeetings', 'groupDetails', 'about',
-                      'contact', 'profile', 'privacyPolicy'];
+                      'contact', 'profile', 'privacyPolicy', 'defaultAvailability'];
     sections.forEach(id => {
         const element = document.getElementById(id);
         if (element) {
