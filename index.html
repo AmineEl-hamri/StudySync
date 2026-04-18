@@ -482,6 +482,48 @@
                          <button class="btn-submit" onclick="changePassword()">Update Password</button>
                      </div>
 
+                      <div class="groups-section" style="margin-top: 1.5rem;">
+                             <h2>🚗 Transport Preference</h2>
+                             <p style="color:#666; margin-bottom: 1rem; font-size:0.95rem;">
+                                 How do you usually travel to group meetings? This is used to calculate your travel times.
+                             </p>
+                             <div class="transport-options">
+                                 <label class="transport-option">
+                                     <input type="radio" name="transportMode" value="driving">
+                                     <span class="transport-card">
+                                         <span class="transport-icon">🚗</span>
+                                         <span class="transport-label">Driving</span>
+                                     </span>
+                                 </label>
+                                 <label class="transport-option">
+                                     <input type="radio" name="transportMode" value="transit" checked>
+                                     <span class="transport-card">
+                                         <span class="transport-icon">🚆</span>
+                                         <span class="transport-label">Public Transport</span>
+                                     </span>
+                                 </label>
+                                 <label class="transport-option">
+                                     <input type="radio" name="transportMode" value="walking">
+                                     <span class="transport-card">
+                                         <span class="transport-icon">🚶</span>
+                                         <span class="transport-label">Walking</span>
+                                     </span>
+                                 </label>
+                                 <label class="transport-option">
+                                     <input type="radio" name="transportMode" value="bicycling">
+                                     <span class="transport-card">
+                                         <span class="transport-icon">🚴</span>
+                                         <span class="transport-label">Cycling</span>
+                                     </span>
+                                 </label>
+                             </div>
+                             <div id="transportSuccess" class="success-message" style="margin-top:1rem;"></div>
+                             <div id="transportError" class="error-message" style="margin-top:1rem;"></div>
+                             <button class="btn-submit" style="margin-top:1rem;" onclick="saveTransportMode()">
+                                 💾 Save Transport Preference
+                             </button>
+                         </div>
+
                       <!-- Availability preferences
                       Three collapsible blocks users can interact with.
                       - Work/Uni Hours, blocks recurring work/lecture times.
