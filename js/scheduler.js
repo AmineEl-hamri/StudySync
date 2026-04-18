@@ -1059,11 +1059,11 @@ function loadGlobalAvailability() {
             }
         })
         .catch(() => console.error('Failed to load global availability'));
-    // Fetch this user's meetings (across all groups) and overlay on the grid
+    // Fetch this user's meetings (across all groups) and  on the grid
     fetch(`${API_URL}/api/users/${currentUser.id}/meetings`)
         .then(r => r.json())
         .then(data => {
-            if (data.success) overlayMeetingsOnGlobalGrid(data.meetings);
+            if (data.success) overlayMeetingsOnGrid(data.meetings);
             else console.error('Meetings overlay failed:', data.error);
         })
         .catch(err => console.error('Failed to load meetings for overlay:', err));
