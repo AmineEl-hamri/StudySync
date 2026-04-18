@@ -133,6 +133,46 @@ function loadAvailability(groupId) {
         });
 }
 
+// Overlay confirmed meetings onto the current week's availability grid.
+function overlayMeetingsOnGrid(meetings) {
+    // First clear any previous meeting overlays (in case we're refreshing)
+    document.querySelectorAll('.time-slot.meeting-booked').forEach(el => {
+        el.classList.remove('meeting-booked');
+        el.title = '';
+    });
+
+    if (!meetings || meetings.length === 0) return;
+
+    // Calculate the Monday and Sunday of the current week
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayOfWeek = today.getDay(); // 0 = Sunday
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    // Map JS getDay() (Sun=0) to your grid's dayIndex (Mon=0)
+    const jsDayToGridIndex = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
+
+    meetings.forEach(meeting => {
+        const mDate = new Date(meeting.meeting_date);
+        if (mDate < monday || mDate > sunday) return; // only this week
+
+        const gridDayIndex = jsDayToGridIndex[mDate.getDay()];
+        const timeStr = meeting.meeting_time.slice(0, 5); 
+
+        const slotId = `${gridDayIndex}-${timeStr}`;
+        const cell = document.querySelector(`.time-slot[data-slot="${slotId}"]`);
+        if (cell) {
+            cell.classList.add('meeting-booked');
+            cell.title = `Meeting booked: ${meeting.day_of_week} at ${timeStr}`
+                + (meeting.location ? ` — ${meeting.location}` : '');
+        }
+    });
+}
+
 function updateFindTimesButton(availability) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -598,31 +638,46 @@ function saveMeetingLocation() {
 function scheduleMeeting(dayOfWeek, meetingTime) {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
-  
+
     // Calculate next occurrence of this day
     const today = new Date();
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const targetDay = daysOfWeek.indexOf(dayOfWeek);
     const currentDay = today.getDay();
-    
+
     let daysUntilMeeting = targetDay - currentDay;
-    if (daysUntilMeeting <= 0) {
+    if (daysUntilMeeting < 0) {
         daysUntilMeeting += 7; // Next week
+    } else if (daysUntilMeeting === 0) {
+        // Same day, only valid if the meeting time is still in the future
+        const [h, m] = meetingTime.split(':').map(Number);
+        const meetingToday = new Date(today);
+        meetingToday.setHours(h, m, 0, 0);
+        if (meetingToday <= today) {
+            daysUntilMeeting = 7; // Roll over to next week
+        }
     }
-    
+
     const meetingDate = new Date(today);
     meetingDate.setDate(today.getDate() + daysUntilMeeting);
-    const meetingDateStr = meetingDate.toISOString().split('T')[0]; // YYYY-MM-DD
-    
+    const meetingDateStr = meetingDate.toISOString().split('T')[0];
+
+    // Final past-meeting guard (belt and braces, also checked on backend)
+    const [hh, mm] = meetingTime.split(':').map(Number);
+    const meetingDateTime = new Date(meetingDate);
+    meetingDateTime.setHours(hh, mm, 0, 0);
+    if (meetingDateTime <= new Date()) {
+        alert('That time has already passed. Please pick a future slot.');
+        return;
+    }
+
     if (!confirm(`Schedule meeting for ${dayOfWeek}, ${meetingDateStr} at ${meetingTime}?`)) {
         return;
     }
-    
+
     fetch(`${API_URL}/api/meetings`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             group_id: currentGroupId,
             day_of_week: dayOfWeek,
@@ -639,11 +694,12 @@ function scheduleMeeting(dayOfWeek, meetingTime) {
                 message += '\n📧 Email notifications sent to all members.';
             }
             alert(message);
-            loadGroupMeetings(); // Refresh meetings display
+            loadGroupMeetings();
+            loadAvailability(currentGroupId); // refresh grid so meeting cells show
         } else {
             alert('Failed to schedule meeting: ' + (data.error || 'Unknown error'));
-    }
-})
+        }
+    })
     .catch(error => {
         console.error('Schedule meeting error:', error);
         alert('Network error. Please try again.');
@@ -658,6 +714,7 @@ function loadGroupMeetings() {
         .then(data => {
             if (data.success) {
                 displayGroupMeetings(data.meetings);
+                overlayMeetingsOnGrid(data.meetings);
             }
         })
         .catch(error => {
