@@ -370,3 +370,12 @@ function initAutocomplete(inputId) {
         });
     });
 }
+
+function showDefaultAvailability() {
+    const currentUser = getCurrentUser();
+    if (!currentUser) { openLoginModal(); return; }
+    hideAllSections();
+    document.getElementById('defaultAvailability').style.display = 'block';
+    generateGlobalAvailabilityGrid();
+    loadGlobalAvailability();
+}
