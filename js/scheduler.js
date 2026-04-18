@@ -188,18 +188,24 @@ function showAvailabilityStatus(availability) {
                 group.members.forEach(memberEmail => {
                     const hasSubmitted = availability[memberEmail] !== undefined;
                     const statusClass = hasSubmitted ? 'submitted' : 'pending';
-                    const statusText = hasSubmitted ? '✓ Submitted' : '⏳ Pending';
-                    
+                    const statusText = hasSubmitted ? '✓ Submitted' : '⏳ Not set';
+                
+                    // If it's the current user who hasn't submitted, show a link to My Availability
+                    const hint = !hasSubmitted && memberEmail === currentUser.email
+                        ? '<a onclick="showDefaultAvailability()" style="color:#4F46E5;cursor:pointer;font-size:0.8rem;margin-left:0.5rem;">→ Set in My Availability</a>'
+                        : '';
+                
                     html += `
                         <div class="member-status">
                             <span class="status-indicator ${statusClass}"></span>
                             <span><strong>${memberEmail.split('@')[0]}</strong></span>
-                            <span style="margin-left: auto; color: ${hasSubmitted ? '#10B981' : '#F59E0B'};">
-                                ${statusText}
+                            <span style="margin-left:auto;color:${hasSubmitted ? '#10B981' : '#F59E0B'};">
+                                ${statusText}${hint}
                             </span>
                         </div>
                     `;
                 });
+
                 
                 statusDiv.innerHTML = html;
             }
