@@ -1,5 +1,14 @@
+// meetings.js powers the "My Meetings" page, a cross-group view of every meeting 
+// the user is a member of. Includes filters such as all, upcoming, and past.
+// It also handles cancellation.
+
+// Initial filter state, always starts by showing all meetings.
+// Stored at module level so filterMeetings() and loadAllMeetings() share
+// the same variables across user interactions.
 let currentMeetingsFilter = 'all';
 
+// Shows the My Meetings page. Authentication gated: Users who aren't logged in
+// are redirected to the login modal rather than seeing an empty page.
 function showMyMeetings() {
     const currentUser = localStorage.getItem('currentUser');
     if (!currentUser) {
@@ -14,6 +23,9 @@ function showMyMeetings() {
     loadAllMeetings();
 }
 
+// Fetches every meeting the user belongs to across all their groups.
+// THe backend endpoint joins groups, group_members, and meetings so a
+// single request returns the full set with group context attached,
 function loadAllMeetings() {
     const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
@@ -34,9 +46,13 @@ function loadAllMeetings() {
         });
 }
 
+// Renders the filtered meeting list. Handles empty states, applies the current filter
+// (all, upcoming, past), and builds the detailed card for each meeitng with badges
+// indicating whether it's today, upcoming, or past.
 function displayAllMeetings(meetings) {
     const container = document.getElementById('allMeetingsGrid');
-    
+
+    // Empty state for users who don't have any meetings.
     if (meetings.length === 0) {
         container.innerHTML = `
             <div class="empty-meetings">
@@ -48,17 +64,20 @@ function displayAllMeetings(meetings) {
         return;
     }
     
-    // Filter meetings based on current filter
+    // Normalise 'today' to midnight so date comparsions ignore the time component,
+    // a meeting 'today' should always count as today regardless of the hour.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
+    // Apply the active filter. 'All' is the default and needs no filtering.
     let filteredMeetings = meetings;
     if (currentMeetingsFilter === 'upcoming') {
         filteredMeetings = meetings.filter(m => new Date(m.meeting_date) >= today);
     } else if (currentMeetingsFilter === 'past') {
         filteredMeetings = meetings.filter(m => new Date(m.meeting_date) < today);
     }
-    
+
+    // Separate empty state when the user has meetings but none match the current filter.
     if (filteredMeetings.length === 0) {
         container.innerHTML = `
             <div class="empty-meetings">
@@ -79,7 +98,8 @@ function displayAllMeetings(meetings) {
             day: 'numeric' 
         });
         
-        // Determine badge
+        // Today, Upcoming, Past badge based on the meeting's calendar date.
+        // Using a separate dateOnly clone avoids mutating meetingDate when zeroing the time.
         let badge = '';
         const dateOnly = new Date(meetingDate);
         dateOnly.setHours(0, 0, 0, 0);
@@ -91,7 +111,9 @@ function displayAllMeetings(meetings) {
         } else {
             badge = '<span class="meeting-badge badge-past">Past</span>';
         }
-        
+
+        // Each card shows the group name, when and where, who scheduled it, plus quick
+        // actions to jump into the group or cancel the meeting.
         html += `
             <div class="meeting-card-full">
                 <div class="meeting-header">
@@ -117,7 +139,7 @@ function displayAllMeetings(meetings) {
                 
                 <div class="meeting-detail">
                     <span class="meeting-detail-icon">👤</span>
-                    <span>Organized by ${meeting.created_by_name}</span>
+                    <span>Organised by ${meeting.created_by_name}</span>
                 </div>
                 
                 <div class="meeting-actions">
@@ -135,6 +157,10 @@ function displayAllMeetings(meetings) {
     container.innerHTML = html;
 }
 
+// Handles the filter tab buttons. Updates the active tab visually, stores the new filter, and
+// re-renders the list.
+// It relies on 'event' being globally available, which is set automatically when this 
+// is invoked from an inline onclick handler in the HTML.
 function filterMeetings(filter) {
     currentMeetingsFilter = filter;
     
@@ -148,6 +174,9 @@ function filterMeetings(filter) {
     loadAllMeetings();
 }
 
+// Cancels a meeting directly from this page without having to navigate into the group first.
+// Backend enforces owner-only cancellation, non-owners will receive a 403 error which surfaces 
+// as a generic "Failed to cancel" alert.
 function deleteMeetingFromDashboard(meetingId) {
     if (!confirm('Are you sure you want to cancel this meeting?')) {
         return;
