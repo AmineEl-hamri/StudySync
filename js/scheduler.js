@@ -1,14 +1,37 @@
-let currentGroupId = null;
-let selectedSlots = new Set();
-let currentGroupOwnerIdCache = null; // cached owner ID to avoid double fetches. 
+// scheduler.js handles everything related to entering a group, running the CSP, managing
+// meetings, editing user/group locations, and the global availability grid on the
+// My Availability page. The file is split roughly into 4 areas:
+// 1. Group Details page (view, status, schedule, meetings)
+// 2. Locations (user home/work + group meeting location)
+// 3. Meetings (scheduling, lisitng, deleting)
+// 4. Global availability grid and Google Calendar import.
 
+
+// Currently open group's id, set by viewGroup() and read by the group-scoped functions below.
+// Null when the user isn't inside a group.
+let currentGroupId = null;
+
+// Leftover from the previous per-group availability. No longer actively used by the 
+// availability grid, but still references in a couple of places.
+let selectedSlots = new Set();
+
+// Cached owner id for the current group. Used so displayScheduleResults() and
+// displayGroupMeetings() can check ownership without a second API call.
+let currentGroupOwnerIdCache = null; 
+
+// Shared with preferences.js for day/time labels and grid indexing.
+// Changing these changes the grid dimensions across the whole app.
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 
+// Opens a group's detail view. Fetches fresh group data to get the current
+// member list, ownership status, and cached owner id, then configures the
+// owner-only UI elements (location editing, delete button) accordingly.
 function viewGroup(groupId) {
     currentGroupId = groupId;
     currentGroupOwnerIdCache = null; // reset cache on new group
 
+    // Clear any stale schedule recommendations left over from the previous group
     const resultsDiv = document.getElementById('scheduleResults');
     if (resultsDiv) {
         resultsDiv.style.display = 'none';
@@ -36,7 +59,9 @@ function viewGroup(groupId) {
             document.getElementById('groupDetailsName').textContent = group.name;
             document.getElementById('groupDetailsDescription').textContent = group.description || 'No description';
             document.getElementById('groupDetailsMemberCount').textContent = group.members.length;
- 
+
+            // Number() coerces string IDs from localStorage to match int IDs
+            // from the API. PRevents a subtle type-mismatch ownership bug.
             const isOwner = Number(currentUser.id) === Number(group.ownerId);
             const locationSection = document.querySelector('.location-section');
             const locationInput = document.getElementById('meetingLocation');
@@ -44,7 +69,9 @@ function viewGroup(groupId) {
             const locationLabel = locationSection.querySelector('label');
             const leaveBtn = document.getElementById('leaveGroupBtn');
             const deleteBtn = document.getElementById('deleteGroupBtn');
- 
+
+            // Owner gets edit access to the meeting location and a delete button.
+            // Non-owners see a read-only location and a leave button instead.
             if (isOwner) {
                 locationInput.disabled = false;
                 locationButton.style.display = 'inline-block';
@@ -58,16 +85,18 @@ function viewGroup(groupId) {
                 leaveBtn.style.display = 'inline-block';
                 deleteBtn.style.display = 'none';
             }
- 
+
+            // Slight delay so the input element exists before Places autocomplete attaches.
             setTimeout(() => initAutocomplete('meetingLocation'), 300);
             loadAvailability(groupId);
             loadMeetingLocation();
             loadGroupMeetings();
-            offerToApplyPreferences(groupId);
         })
         .catch(() => alert('Network error loading group. Please try again.'));
 }
 
+// Returns the user to the dashboard. Clears group-scoped state so reopening
+// a different group starts fresh.
 function backToDashboard() {
   hideAllSections();
   document.getElementById('dashboard').style.display = 'block';
@@ -75,9 +104,11 @@ function backToDashboard() {
   currentGroupOwnerIdCache = null;
 }
 
+// Module-level guard to prevent the Find Times button being triggered twice
+// in rapid succession (it takes a moment to return and the button stays visible)
 let isScheduling = false;
 
-
+// Currently unused. Left in place for a possible future "last saved at" UX.
 function showSavedTimestamp() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -98,6 +129,10 @@ function showSavedTimestamp() {
     setTimeout(() => { stamp.style.opacity = '0.5'; }, 8000);
 }
 
+// Fetches the group's aggregated availability (every member's slots) and
+// triggers the summary display and button state refresh. The group detail
+// page no longer shows a per-user grid, so this function is mostly about
+// status display now.
 function loadAvailability(groupId) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -107,7 +142,9 @@ function loadAvailability(groupId) {
         .then(data => {
             if (data.success) {
                 const availability = data.availability;
-                
+
+                // Retained for backwards compatibility with any per-group grid
+                // still in the DOM; harmless on the new global-only layout
                 if (availability[currentUser.email]) {
                     selectedSlots = new Set(availability[currentUser.email].slots);
                     
@@ -140,7 +177,10 @@ function loadAvailability(groupId) {
         });
 }
 
-// Overlay confirmed meetings onto the current week's availability grid.
+// Overlays the user's confirmed meetings on the global availability grid as
+// distinct purple cells. Runs only for the current week, meetings further
+// out aren't shown because the grid itself only represents a weekly template.
+// Clearing previous overlays first ensures re-renders don't leave stale cells.
 function overlayMeetingsOnGrid(meetings) {
     // clear any previous meeting overlays
     document.querySelectorAll('.time-slot.meeting-booked').forEach(el => {
@@ -160,17 +200,17 @@ function overlayMeetingsOnGrid(meetings) {
     sunday.setDate(monday.getDate() + 6);
     sunday.setHours(23, 59, 59, 999);
 
-    // Map JS getDay() (Sun=0) to your grid's dayIndex (Mon=0)
+    // Our grid uses Mon=0, but JS Date.getDay() uses Sun=0 - remap
     const jsDayToGridIndex = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
 
     meetings.forEach(meeting => {
         const mDate = new Date(meeting.meeting_date);
-        if (mDate < monday || mDate > sunday) return; // only this week
+        if (mDate < monday || mDate > sunday) return; // skip meetings outside this week
 
         const gridDayIndex = jsDayToGridIndex[mDate.getDay()];
         const timeStr = meeting.meeting_time.slice(0, 5); 
 
-        const slotId = `global-${gridDayIndex}-${timeStr}`
+        const slotId = `global-${gridDayIndex}-${timeStr}`;
         const cell = document.querySelector(`.time-slot[data-slot="${slotId}"]`);
         if (cell) {
             cell.classList.add('meeting-booked');
@@ -180,6 +220,9 @@ function overlayMeetingsOnGrid(meetings) {
     });
 }
 
+// Re-labels and recolours the "Find Optimal Meeting Times" button based on how
+// many members have submitted availability. Green when everyone's ready,
+// amber when partial, default when nobody has started.
 function updateFindTimesButton(availability) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -216,7 +259,9 @@ function updateFindTimesButton(availability) {
         });
 }
 
-
+// Renders a per-member list showing who has submitted availability and who
+// hasn't. If the current user is among the non-submitters, adds a shortcut
+// link to take them straight to the My Availability page.
 function showAvailabilityStatus(availability) {
     const statusDiv = document.getElementById('availabilityStatus');
     
@@ -258,7 +303,10 @@ function showAvailabilityStatus(availability) {
             }
         });
 }
-                                                      
+
+// Runs the CSP scheduling algorithm for the current group. The button
+// changes to a loading state while the request is in flight and a
+// module-level flag (isScheduling) prevents accidental double-invocation.
 function findMeetingTimes() {
     if (isScheduling) return; // prevent double-click
     isScheduling = true;
@@ -284,6 +332,10 @@ function findMeetingTimes() {
         });
 }
 
+// Renders the CSP output: up to five ranked meeting options with score,
+// available/unavailable members, and a per-member travel timeline showing
+// departure time, journey duration, traffic indicator, and arrival time.
+// The Schedule This Meeting button is rendered only for the group owner.
 function displayScheduleResults(optimalTimes) {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -305,19 +357,26 @@ function displayScheduleResults(optimalTimes) {
     let html = '';
     optimalTimes.forEach(function(option, index) {
 
+        // Derive unavailable members by subtracting the available set from the full group
         const allMemberEmails = option.members_all || [];
         const unavailableMembers = allMemberEmails.filter(m => !option.members.includes(m));
-        
+
+        // Travel block is only present when a member has both a saved location
+        // and travel time could be calculated, quietly ignore it if absent.
         let travelInfoHtml = '';
         if (option.travel_info && Object.keys(option.travel_info).length > 0) {
             travelInfoHtml = '<div class="travel-info"><p><strong>🚗 Travel Times & Departure Schedule:</strong></p>';
             for (const email in option.travel_info) {
                 const travel = option.travel_info[email];
                 const memberName = email.split('@')[0];
-            
+
+                //  Icon reflects the user's chosen mode of transport.
                 const modeIcons = { driving: '🚗', transit: '🚆', walking: '🚶', bicycling: '🚴' };
                 const modeIcon = modeIcons[travel.mode] || '🚆';
-            
+
+                 // Traffic classification is based on total journey duration;
+                // works reasonably for all modes even though the word "traffic"
+                // technically only fits driving.
                 let trafficIcon = '🟢';
                 let trafficText = 'Light traffic';
                 if (travel.duration_minutes > 45) { trafficIcon = '🔴'; trafficText = 'Heavy traffic'; }
@@ -351,7 +410,8 @@ function displayScheduleResults(optimalTimes) {
             unavailableMembers.forEach(m => html += `<span class="member-badge unavailable-badge">✗ ${m.split('@')[0]}</span>`);
             html += '</div>';
         }
- 
+
+        // Only owners get the scheduling action; non-owners see an explanation
         if (isOwner) {
             html += `<div style="margin-top:15px;">
                 <button class="btn-schedule-meeting" onclick="scheduleMeeting('${option.day}', '${option.time}')">📅 Schedule This Meeting</button>
@@ -364,10 +424,14 @@ function displayScheduleResults(optimalTimes) {
  
     timesDiv.innerHTML = html;
     resultsDiv.style.display = 'block';
+    // Gently scroll into view so users don't have to hunt for the new results
     resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 
+// Currently unused. Builds a summary banner of heavy-traffic alerts across
+// all options; could be plugged into displayScheduleResults() if that
+// information warrants more emphasis later.
 function checkTrafficAlerts(optimalTimes) {
     let alerts = [];
     
@@ -388,18 +452,24 @@ function checkTrafficAlerts(optimalTimes) {
     return '';
 }
 
+// Locations (user home/work and group meeting location).
+
+// Opens the My Locations modal and populates it with the user's saved
+// home and work addresses.
 function openLocationSettings() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
     loadUserLocations(currentUser.id);
     const modal = document.getElementById('locationModal');
-    modal.style.display = 'flex'; // flex instead of block
+    modal.style.display = 'flex'; // flex instead of block so the content centres vertically
 }
 
 function closeLocationModal() {
     document.getElementById('locationModal').style.display = 'none';
 }
 
+// Fetches the user's saved locations and fills both the input fields
+// and the summary list below them.
 function loadUserLocations(userId) {
   fetch(`${API_URL}/api/locations/${userId}`)
         .then(response => response.json())
@@ -422,6 +492,8 @@ function loadUserLocations(userId) {
         });
 }
 
+// Renders the "Saved Locations" summary list below the inputs in the modal.
+// Marks the default location with a green badge.
 function displaySavedLocations(locations) {
     const container = document.getElementById('savedLocations');
     
@@ -452,6 +524,8 @@ function displaySavedLocations(locations) {
     container.innerHTML = html;
 }
 
+// Saves either the home or work address. The backend marks home addresses
+// as the default (used for travel-time calculations).
 function saveLocation(locationType) {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
@@ -491,6 +565,8 @@ function saveLocation(locationType) {
     });
 }
 
+// Loads the current group's meeting location into the input field and
+// the "Current: ..." display beneath it. Called as part of viewGroup().
 function loadMeetingLocation() {
     if (!currentGroupId) return;
     
@@ -511,6 +587,8 @@ function loadMeetingLocation() {
         });
 }
 
+// Saves the group's meeting location. Backend enforces that only the owner
+// can call this. Non-owners will receive a 403 which surfaces as a generic alert.
 function saveMeetingLocation() {
   const currentUser = getCurrentUser();
   if (!currentUser) { openLoginModal(); return; }
@@ -548,11 +626,17 @@ function saveMeetingLocation() {
     });
 }
 
+// Meetings (schedule / list / cancel)
+
+// Confirms the proposed meeting option as a real meeting. Converts the
+// abstract "Wednesday at 14:00" from the CSP into a concrete date by
+// finding the next occurrence of that weekday. Includes a belt-and-braces
+// check to reject past times (the backend also enforces this).
 function scheduleMeeting(dayOfWeek, meetingTime) {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
 
-    // Calculate next occurrence of this day
+    // Work out how many days from today the named weekday is
     const today = new Date();
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const targetDay = daysOfWeek.indexOf(dayOfWeek);
@@ -560,9 +644,9 @@ function scheduleMeeting(dayOfWeek, meetingTime) {
 
     let daysUntilMeeting = targetDay - currentDay;
     if (daysUntilMeeting < 0) {
-        daysUntilMeeting += 7; // Next week
+        daysUntilMeeting += 7; // Next week's occurrence
     } else if (daysUntilMeeting === 0) {
-        // Same day, only valid if the meeting time is still in the future
+        // Same day, allow only if the meeting time hasn't passed yet; otherwise roll to next week
         const [h, m] = meetingTime.split(':').map(Number);
         const meetingToday = new Date(today);
         meetingToday.setHours(h, m, 0, 0);
@@ -575,7 +659,8 @@ function scheduleMeeting(dayOfWeek, meetingTime) {
     meetingDate.setDate(today.getDate() + daysUntilMeeting);
     const meetingDateStr = meetingDate.toISOString().split('T')[0];
 
-    // Final past-meeting guard (belt and braces, also checked on backend)
+    // Final safety check, if somehow the computed time is still in the past, abort.
+    // The backend enforces the same rule but surfacing it earlier is better UX.
     const [hh, mm] = meetingTime.split(':').map(Number);
     const meetingDateTime = new Date(meetingDate);
     meetingDateTime.setHours(hh, mm, 0, 0);
@@ -619,6 +704,9 @@ function scheduleMeeting(dayOfWeek, meetingTime) {
     });
 }
 
+// Fetches the group's confirmed meetings and hands them off for both the
+// list render and the overlay on the My Availability grid. Called as part
+// of viewGroup() and after any meeting create/delete.
 function loadGroupMeetings() {
     if (!currentGroupId) return;
     
@@ -635,6 +723,9 @@ function loadGroupMeetings() {
         });
 }
 
+// Renders confirmed meetings as cards. Past meetings get a dimmed style and
+// a "Past" badge; upcoming ones get "Upcoming". The Cancel button appears
+// only for the owner.
 function displayGroupMeetings(meetings) {
     const container = document.getElementById('scheduledMeetings');
     const currentUser = getCurrentUser();
@@ -689,6 +780,9 @@ function displayGroupMeetings(meetings) {
     container.innerHTML = html;
 }
 
+// Cancels a confirmed meeting. The backend sends cancellation emails to
+// every member; on success we refresh the meetings list so the cell overlay
+// on the availability grid is removed in the same render cycle.
 function deleteMeeting(meetingId) {
     if (!confirm('Are you sure you want to cancel this meeting?')) return;
     const currentUser = getCurrentUser();
@@ -711,6 +805,8 @@ function deleteMeeting(meetingId) {
     .catch(() => alert('Network error. Please try again.'));
 }
 
+// Removes the current user from a group. Backend rejects the call if the
+// caller is the owner - owners must delete the group instead.
 function leaveGroup() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
@@ -734,6 +830,8 @@ function leaveGroup() {
     .catch(() => alert('Network error. Please try again.'));
 }
 
+// Permanently deletes a group and cascades to availability, meetings, and
+// member rows. Double-confirm because the action is irreversible.
 function deleteGroup() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
@@ -758,12 +856,20 @@ function deleteGroup() {
     .catch(() => alert('Network error. Please try again.'));
 }
 
-// Global Availability functions.
+// Global Availability Grid
+// The grid on the My Availability page. Slots here are identified by the
+// prefix `global-` so they can't be confused with any per-group cells that
+// might still exist in the DOM. Drag-to-select is supported with both
+// mouse and touch events.
 
 let globalSelectedSlots = new Set();
-let isGlobalDragging = false;
-let globalDragMode = null;
+let isGlobalDragging = false; 
+let globalDragMode = null; // 'select' or 'deselect' — determined by the cell the drag started on
 
+// Builds the grid HTML: seven day columns across, thirteen hourly rows.
+// Each cell is wired up with mouse and touch handlers that support drag-select.
+// Day headers and time labels are themselves clickable to toggle an entire
+// column or row at once.
 function generateGlobalAvailabilityGrid() {
     const grid = document.getElementById('globalAvailabilityGrid');
     if (!grid) return;
@@ -799,10 +905,16 @@ function generateGlobalAvailabilityGrid() {
     html += '</tbody></table>';
     grid.innerHTML = html;
 
+    // Terminate drag mode if the pointer leaves the grid or is released
+    // anywhere in the document, prevents a drag getting stuck on
     grid.addEventListener('mouseleave', endGlobalDrag);
     document.addEventListener('mouseup', endGlobalDrag);
 }
 
+// Begins a drag. The first cell decides whether the drag is adding or removing
+// slots: clicking an unselected cell enters 'select' mode, clicking a selected
+// cell enters 'deselect' mode. Meeting-booked cells are exempt, clicks there
+// do nothing so users can't accidentally toggle availability over a meeting.
 function startGlobalDrag(slotId, event) {
     event.preventDefault();
     const el = document.querySelector(`[data-slot="${slotId}"]`);
@@ -812,17 +924,22 @@ function startGlobalDrag(slotId, event) {
     applyGlobalDragToSlot(slotId);
 }
 
+// Continues the drag to a newly-hovered cell, applying the same mode
+// (select/deselect) as the start cell.
 function continueGlobalDrag(slotId) {
     if (globalDragMode === null) return;
     isGlobalDragging = true;
     applyGlobalDragToSlot(slotId);
 }
 
+// Ends the drag. Called from mouseup anywhere in the document.
 function endGlobalDrag() {
     isGlobalDragging = false;
     globalDragMode = null;
 }
 
+// Applies the current drag mode (select or deselect) to one cell.
+// Used by both the initial click and subsequent mouseenter events.
 function applyGlobalDragToSlot(slotId) {
     const el = document.querySelector(`[data-slot="${slotId}"]`);
     if (!el) return;
@@ -835,6 +952,8 @@ function applyGlobalDragToSlot(slotId) {
     }
 }
 
+// Mobile equivalent of startGlobalDrag. Same logic, just reading from
+// touch events instead of mouse events.
 function handleGlobalTouchStart(slotId, event) {
     event.preventDefault();
     isGlobalDragging = false;
@@ -842,12 +961,17 @@ function handleGlobalTouchStart(slotId, event) {
     applyGlobalDragToSlot(slotId);
 }
 
+// Touch equivalent of continueGlobalDrag. Uses elementFromPoint() because
+// touchmove fires on the starting element only, we have to ask the DOM
+// what element is under the finger right now.
 function handleGlobalTouchMove(event) {
     event.preventDefault();
     const touch = event.touches[0];
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     if (el && el.classList.contains('time-slot')) {
         const slotId = el.getAttribute('data-slot');
+        // Only act on global-prefixed slots (protects against stray cells
+        // from any other grid that might exist in the DOM)
         if (slotId && slotId.startsWith('global-')) {
             isGlobalDragging = true;
             applyGlobalDragToSlot(slotId);
@@ -855,6 +979,9 @@ function handleGlobalTouchMove(event) {
     }
 }
 
+// Column-select shortcut: toggles every slot in a given day at once. If
+// every slot in the day is already selected, clicking deselects them all;
+// otherwise it selects any that aren't already selected.
 function selectGlobalDay(dayIndex) {
     const daySlots = TIME_SLOTS.map(time => `global-${dayIndex}-${time}`);
     const allSelected = daySlots.every(slot => globalSelectedSlots.has(slot));
@@ -871,6 +998,8 @@ function selectGlobalDay(dayIndex) {
     });
 }
 
+// Row-select shortcut: same logic as selectGlobalDay but for a single
+// time slot across all seven days.
 function selectGlobalRow(time) {
     const rowSlots = DAYS.map((_, dayIndex) => `global-${dayIndex}-${time}`);
     const allSelected = rowSlots.every(slot => globalSelectedSlots.has(slot));
@@ -887,6 +1016,8 @@ function selectGlobalRow(time) {
     });
 }
 
+// Selects every cell in the grid, convenience for users who are free at
+// most times and want to then trim a few exceptions.
 function selectAllGlobal() {
     DAYS.forEach((_, dayIndex) => {
         TIME_SLOTS.forEach(time => {
@@ -900,6 +1031,7 @@ function selectAllGlobal() {
     });
 }
 
+// Deselects everything. Confirmation prompt prevents accidental clicks.
 function clearGlobal() {
     if (globalSelectedSlots.size === 0) return;
     if (!confirm('Clear all default availability slots?')) return;
@@ -908,14 +1040,20 @@ function clearGlobal() {
         .forEach(el => el.classList.remove('selected'));
 }
 
+// Guard against double-saves during the request round trip
 let isGlobalSaving = false;
 
+// Persists the selected slots to the backend. Strips the 'global-' prefix
+// before sending so the API receives slots in the canonical 'day-time' form.
+// The backend propagates the save across every group the user is a member of.
 function saveGlobalAvailability() {
     if (isGlobalSaving) return;
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
 
     isGlobalSaving = true;
+    // Locate the save button via its container so we don't have to give it a
+    // stable id (the surrounding .groups-section is always present)
     const btn = document.querySelector('#globalAvailabilityGrid')
         ?.closest('.groups-section')
         ?.querySelector('.btn-primary');
@@ -937,6 +1075,7 @@ function saveGlobalAvailability() {
             const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             stamp.textContent = `✅ Default availability saved at ${timeStr}`;
             stamp.style.display = 'block';
+            // Soften the confirmation after a few seconds so it doesn't dominate
             setTimeout(() => stamp.style.opacity = '0.5', 5000);
         } else {
             alert('Failed to save: ' + (data.error || 'Unknown error'));
@@ -945,10 +1084,13 @@ function saveGlobalAvailability() {
     .catch(() => alert('Network error. Please try again.'))
     .finally(() => {
         isGlobalSaving = false;
-        if (btn) { btn.disabled = false; btn.textContent = '💾 Save Default Availability'; }
+        if (btn) { btn.disabled = false; btn.textContent = '💾 Save My Availability'; }
     });
 }
 
+// Loads the saved global availability and paints the grid accordingly.
+// Also kicks off a parallel request for the user's meetings so they can be
+// overlaid on the same grid (purple cells for booked times).
 function loadGlobalAvailability() {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -957,6 +1099,7 @@ function loadGlobalAvailability() {
         .then(r => r.json())
         .then(data => {
             if (data.success && data.slots.length > 0) {
+                 // Re-prefix each saved slot to match the grid's data-slot ids
                 globalSelectedSlots = new Set(data.slots.map(s => `global-${s}`));
                 globalSelectedSlots.forEach(slotId => {
                     const el = document.querySelector(`[data-slot="${slotId}"]`);
@@ -972,7 +1115,8 @@ function loadGlobalAvailability() {
             }
         })
         .catch(() => console.error('Failed to load global availability'));
-    // Fetch this user's meetings (across all groups) and  on the grid
+    // Overlay meetings on the grid once loaded. This runs in parallel with
+    // the availability load, the two don't depend on each other.
     fetch(`${API_URL}/api/users/${currentUser.id}/meetings`)
         .then(r => r.json())
         .then(data => {
@@ -982,6 +1126,13 @@ function loadGlobalAvailability() {
         .catch(err => console.error('Failed to load meetings for overlay:', err));
 }
 
+// Google Calendar import (global)
+// Imports the user's Google Calendar busy times for the current week and
+// turns them into availability slots across every group they're in.
+// Triggered from the Import button on the My Availability page.
+
+// Entry point for the Import button. Checks whether the user has already
+// authorised Google; if not, kicks off the OAuth flow first.
 function importGoogleCalendarGlobal() {
     const currentUser = getCurrentUser();
     if (!currentUser) { openLoginModal(); return; }
@@ -1010,6 +1161,9 @@ function importGoogleCalendarGlobal() {
         });
 }
 
+// Kicks off the OAuth flow in a popup window. Listens for a postMessage
+// from the callback page indicating the flow has succeeded, at which
+// point it triggers the actual import.
 function startOAuthFlowGlobal(userId, btn) {
     btn.textContent = '🔄 Connecting...';
     fetch(`${API_URL}/api/oauth/google/initiate?user_id=${userId}`)
@@ -1036,6 +1190,10 @@ function startOAuthFlowGlobal(userId, btn) {
         });
 }
 
+// Performs the actual import. Calculates the Monday-to-Sunday window for
+// the current week and hands it off to the backend, which reads busy times
+// from Google Calendar, inverts them to free slots, and saves across all
+// the user's groups in one operation.
 function runGlobalCalendarImport() {
     const currentUser = getCurrentUser();
     if (!currentUser) return;
@@ -1067,7 +1225,8 @@ function runGlobalCalendarImport() {
             const weekStr = `${monday.toLocaleDateString()} – ${sunday.toLocaleDateString()}`;
             alert(`✅ Imported this week (${weekStr})\n${data.slots_count} available slots found across ${data.groups_updated} groups!`);
 
-            // Refresh the grid to show the new slots
+            // Clear the current selection and re-render so the freshly-imported
+            // slots appear. loadGlobalAvailability handles the re-population
             globalSelectedSlots.clear();
             document.querySelectorAll('#globalAvailabilityGrid .time-slot.selected')
                 .forEach(el => el.classList.remove('selected'));
