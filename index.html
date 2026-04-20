@@ -855,7 +855,7 @@
               <div id="prefPreviewList" style="margin: 1rem 0; background:#f9fafb; padding:1rem; border-radius:8px; font-size:0.9rem; color:#4B5563;"></div>
              <div style="display:flex; gap:1rem; margin-top:1.5rem;">
                  <button class="btn-secondary" style="flex:1;" onclick="closeApplyPreferencesModal()">No Thanks</button>
-                 <button class="btn-submit" style="flex:1;" onclick="applyPreferencesToGroup()">Apply Preferences</button>
+                 <button class="btn-submit" style="flex:1;" onclick="applyPreferencesToAvailability()">Apply Preferences</button>
              </div>
          </div>
      </div>
@@ -921,7 +921,7 @@
           <p>You have saved availability preferences. Apply them to this group?</p>
           <div class="toast-buttons">
                <button class="toast-btn-dismiss" onclick="dismissPrefsToast()">Not Now</button>
-             <button class="toast-btn-apply" onclick="applyPreferencesToGroup(); document.getElementById('prefToast').style.display='none'">Apply</button>
+             <button class="toast-btn-apply" onclick="applyPreferencesToAvailability(); document.getElementById('prefToast').style.display='none'">Apply</button>
           </div>
      </div>
      <!-- Footer. Shown on everypage. Contains copyright and privacy policy link. -->
