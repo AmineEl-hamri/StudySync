@@ -49,11 +49,20 @@ function showLoadingState() {
 
 // Global event listeners, currently just the click outside to close behaviour for modals.
 function setupEventListeners() {
-    // Close modals when clicking outside
     window.onclick = function(event) {
+        // Close modals when clicking outside
         if (event.target.classList.contains('modal')) {
             event.target.classList.remove('active');
             event.target.style.display = 'none';
+        }
+
+        // Close user dropdown when clicking outside of it
+        const dropdown = document.getElementById('dropdown');
+        const userMenu = document.querySelector('.user-name');
+        if (dropdown && dropdown.classList.contains('active')) {
+            if (!dropdown.contains(event.target) && !userMenu.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
         }
     };
 }
