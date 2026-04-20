@@ -134,6 +134,6 @@ function restartTutorial() {
     localStorage.removeItem('studysync_tutorial_done');
     // Close the user dropdown if it's open
     const dropdown = document.getElementById('dropdown');
-    if (dropdown) dropdown.classList.remove('show');
+    if (dropdown) dropdown.classList.remove('active');
     startTutorial();
 }
