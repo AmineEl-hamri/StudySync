@@ -1065,7 +1065,7 @@ function saveGlobalAvailability() {
     fetch(`${API_URL}/api/users/${currentUser.id}/availability`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slots })
+        body: JSON.stringify({ slots, confirm_clear: slots.length === 0 })
     })
     .then(r => r.json())
     .then(data => {
