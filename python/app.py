@@ -935,7 +935,7 @@ def update_group_location(group_id):
         if not result:
             return jsonify({'success': False, 'error': 'Group not found'}), 404
         # Ownership check, only owner can set meeting location
-        if int(result[0]) != int(user_id)
+        if int(result[0]) != int(user_id):
             return jsonify({'success': False, 'error': 'Only the group owner can set the meeting location'}), 403
         cur.execute("UPDATE groups SET meeting_location = %s WHERE id = %s", (location, group_id))
         conn.commit()
