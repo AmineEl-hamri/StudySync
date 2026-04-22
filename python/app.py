@@ -376,6 +376,10 @@ def create_group():
                 VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING
             """, (group_id, owner_id, day_index, time_slot))
 
+        # Fetch owner email once so we can skip it if accidentally listed as a member
+        cur.execute("SELECT email FROM users WHERE id = %s", (owner_id,))
+        owner_row = cur.fetchone()
+        owner_email = owner_row[0].lower() if owner_row else None
         # Look up each invited email and add them if they exist. Emails that don't
         # match a registered user get reported back so the UI can warn.
         added_members = []
@@ -385,6 +389,8 @@ def create_group():
             if not is_valid_email(email):
                 skipped_emails.append(email)
                 continue
+            if email == owner_email:
+                continue  # silently skip, they're already added as owner
             cur.execute("SELECT id FROM users WHERE email = %s", (email,))
             user = cur.fetchone()
             if user:
