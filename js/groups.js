@@ -120,7 +120,14 @@ function addMember() {
     alert('Please enter a valid email address.');
     return;
   }
+
+  // Prevent users from adding their own email. they're added automatically as owner
+  const currentUser = getCurrentUser();
+  if (currentUser && memberEmail === currentUser.email.toLowerCase()) {
+    alert('You don\'t need to add yourself, you\'re automatically a member as the group owner.');
+    return;
   
+  }
   if (tempMembers.includes(memberEmail)) {
     alert('Member already addedd.');
     return;
